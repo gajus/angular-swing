@@ -67,7 +67,10 @@ Use scope variables/methods to add/remove cards:
 ```
 
 ```js
-$scope.cards = [{name: 'foo'}];
+$scope.cards = [
+    {name: 'foo'},
+    {name: 'bar'}
+];
 $scope.remove = function (index) {
     $scope.cards.splice(index, 1);
 }
