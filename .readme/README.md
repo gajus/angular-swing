@@ -46,6 +46,28 @@ Attach event listeners to the instance of Card:
 </ul>
 ```
 
+Use scope variables to add/remove cards:
+
+```html
+<ul swing-stack>
+    <li
+        swing-card
+        swing-on-throwout="remove($index)"
+        ng-repeat="card in cards"
+        >{{card.name}}</li>
+</ul>
+```
+
+```js
+$scope.cards = [{name: 'foo'}];
+$scope.remove = function (index) {
+    $scope.cards.splice(index, 1);
+}
+$scope.add = function (name) {
+    $scope.cards.push({name: name});
+};
+```
+
 ### Examples
 
 * [Card stack](http://gajus.com/sandbox/angular-swing/examples/card-stack/) using AngularJS directive.
