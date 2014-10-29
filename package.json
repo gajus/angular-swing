@@ -7,7 +7,7 @@
     "swipeable"
   ],
   "version": "1.0.0",
-  "main": "src/swing.js",
+  "main": "src/angular-swing.js",
   "author": "Gajus Kuizinas <gk@anuary.com>",
   "repository": {
     "type": "git",

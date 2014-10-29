@@ -23,7 +23,7 @@ gulp.task('clean', ['lint'], function (cb) {
 
 gulp.task('bundle', ['clean'], function () {
     return gulp
-        .src('./src/swing.js')
+        .src('./src/angular-swing.js')
         .pipe(browserify({
             //debug : true
         }))

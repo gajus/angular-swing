@@ -13,7 +13,7 @@ AngularJS directive for [Swing](https://github.com/gajus/swing): A swipeable car
 
 ## Usage
 
-Include `./dist/swing.js`.
+Include [./dist/angular-swing.js.](https://raw.githubusercontent.com/gajus/angular-swing/master/dist/swing.js).
 
 Prepare a Swing stack:
 
