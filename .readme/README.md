@@ -46,7 +46,7 @@ Attach event listeners to the instance of Card:
 </ul>
 ```
 
-Use scope variables to add/remove cards:
+Use scope variables/methods to add/remove cards:
 
 ```html
 <ul swing-stack>
