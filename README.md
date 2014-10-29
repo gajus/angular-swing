@@ -11,10 +11,45 @@ AngularJS directive for [Swing](https://github.com/gajus/swing): A swipeable car
 
 ## Contents
 
+- [Usage](#usage)
 - [Usage Examples](#usage-examples)
+- [Events](#events)
 - [Download](#download)
 
 
+
+## Usage
+
+Prepare a Swing stack:
+
+```html
+<ul swing-stack></ul>
+```
+
+Add a Card to the Swing stack:
+
+```html
+<ul swing-stack>
+    <li swing-card></li>
+</ul>
+```
+
+Attach event listeners to the instance of Card:
+
+```html
+<ul swing-stack>
+    <li
+        swing-card
+        swing-on-throwout="console.log(eventName, eventObject)"
+        swing-on-throwoutleft="console.log(eventName, eventObject)"
+        swing-on-throwoutright="console.log(eventName, eventObject)"
+        swing-on-throwin="console.log(eventName, eventObject)"
+        swing-on-dragstart="console.log(eventName, eventObject)"
+        swing-on-dragmove="console.log(eventName, eventObject)"
+        swing-on-dragend="console.log(eventName, eventObject)"
+        ></li>
+</ul>
+```
 
 ## Usage Examples
 
@@ -25,6 +60,22 @@ There are more examples that using the standalone [Swing](https://github.com/gaj
 The code for all of the examples is in the [./examples/](https://github.com/gajus/angular-swing/tree/master/examples/) folder.
 
 [Raise an issue](https://github.com/gajus/angular-swing/issues) if you are missing an example.
+
+## Events
+
+Documentation of all the events is available in the [Swing](https://github.com/gajus/swing/#events) documentation.
+
+Swing events translate to the following attributes in the AngularJS directive:
+
+| Name | Description |
+| --- | --- |
+| `throwout` | `swing-on-throwout` |
+| `throwoutleft` | `swing-on-throwoutleft` |
+| `throwoutright` | `swing-on-throwoutright` |
+| `throwin` | `swing-on-throwin` |
+| `dragstart` | `swing-on-dragstart` |
+| `dragmove` | `swing-on-dragmove` |
+| `dragend` | `swing-on-dragend` |
 
 ## Download
 

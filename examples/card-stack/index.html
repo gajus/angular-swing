@@ -4,25 +4,23 @@
     <link rel="stylesheet" href="./card-stack.css">
 
     <script src="./../../bower_components/angular/angular.js"></script>
-    <script src="./../../dist/swing.min.js"></script>
+    <script src="./../../dist/swing.js"></script>
     
     <script src="./card-stack.js"></script>
 </head>
 <body ng-app="card-stack-demo">
     <div id="viewport" ng-controller="card-stack-playground">
-        <ul class="stack" swing-stack="">
+        <ul class="stack" swing-stack>
             <li
-                swing-card=""
-                swing-on-throwout="throwout(eventObject)"
-                swing-on-throwoutleft="throwoutleft(eventObject)"
-                swing-on-throwoutright="throwoutright(eventObject)"
-                swing-on-throwin="throwin(eventObject)"
-                swing-on-dragstart="dragstart(eventObject)"
-                swing-on-dragmove="dragmove(eventObject)"
-                swing-on-dragend="dragend(eventObject)"
-                
-                ng-repeat="card in cards"
-            >{{card.symbol}}</li>
+                swing-card
+                swing-on-throwout="console.log(eventName, eventObject)"
+                swing-on-throwoutleft="console.log(eventName, eventObject)"
+                swing-on-throwoutright="console.log(eventName, eventObject)"
+                swing-on-throwin="console.log(eventName, eventObject)"
+                swing-on-dragstart="console.log(eventName, eventObject)"
+                swing-on-dragmove="console.log(eventName, eventObject)"
+                swing-on-dragend="console.log(eventName, eventObject)"
+                ng-repeat="card in cards" ng-class="card.name">{{card.symbol}}</li>
         </ul>
     </div>
     <div id="source">

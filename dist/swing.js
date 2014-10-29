@@ -4059,7 +4059,7 @@ angular
         return {
             restrict: 'A',
             scope: {},
-            controller: function ($scope, $element) {
+            controller: function () {
                 var stack;
 
                 stack = Swing.Stack();
@@ -4083,8 +4083,8 @@ angular
                 swingOnDragmove: '&',
                 swingOnDragend: '&'
             },
-            link: function ($scope, $element, $attrs, swingStack) {
-                var card = swingStack.add($element[0]),
+            link: function (scope, element, attrs, swingStack) {
+                var card = swingStack.add(element[0]),
                     events = ['throwout', 'throwoutleft', 'throwoutright', 'throwin', 'dragstart', 'dragmove', 'dragend'];
 
                 // Map all Swing events to the scope expression.
@@ -4092,7 +4092,7 @@ angular
                 // @see https://docs.angularjs.org/api/ng/service/$compile#comprehensive-directive-api
                 angular.forEach(events, function (eventName) {
                     card.on(eventName, function (eventObject) {
-                        $scope['swingOn' + eventName.charAt(0).toUpperCase() + eventName.slice(1)]({eventObject: eventObject});
+                        scope['swingOn' + eventName.charAt(0).toUpperCase() + eventName.slice(1)]({eventName: eventName, eventObject: eventObject});
                     });
                 });
             }
