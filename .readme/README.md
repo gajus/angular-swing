@@ -56,7 +56,7 @@ The code for all of the examples is in the [./examples/](https://github.com/gaju
 
 ## Events
 
-Documentation of all the events is available in the [Swing](https://github.com/gajus/swing/#events) documentation.
+Documentation of events is in the [Swing](https://github.com/gajus/swing/#events) documentation.
 
 Swing events translate to the following attributes in the AngularJS directive:
 
@@ -69,6 +69,12 @@ Swing events translate to the following attributes in the AngularJS directive:
 | `dragstart` | `swing-on-dragstart` |
 | `dragmove` | `swing-on-dragmove` |
 | `dragend` | `swing-on-dragend` |
+
+Event listener expression can use `eventName` and [`eventObject`](#event-object) parameters.
+
+### Event Object
+
+Documentation of event object is in the [Swing](https://github.com/gajus/swing/#event-object) documentation.
 
 ## Download
 
