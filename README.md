@@ -21,6 +21,8 @@ AngularJS directive for [Swing](https://github.com/gajus/swing): A swipeable car
 
 ## Usage
 
+Include `./dist/swing.js`.
+
 Prepare a Swing stack:
 
 ```html
@@ -64,7 +66,7 @@ The code for all of the examples is in the [./examples/](https://github.com/gaju
 
 ## Events
 
-Documentation of events is in the [Swing](https://github.com/gajus/swing/#events) documentation.
+[Swing Documentation](https://github.com/gajus/swing/#event-object) for the Events.
 
 Swing events translate to the following attributes in the AngularJS directive:
 
@@ -82,7 +84,7 @@ Event listener expression can use `eventName` and [`eventObject`](#event-object)
 
 ### Event Object
 
-Documentation of event object is in the [Swing](https://github.com/gajus/swing/#event-object) documentation.
+[Swing Documentation](https://github.com/gajus/swing/#event-object) for the Event Object.
 
 ## Download
 
