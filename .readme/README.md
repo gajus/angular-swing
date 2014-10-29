@@ -46,7 +46,7 @@ Attach event listeners to the instance of Card:
 </ul>
 ```
 
-## Usage Examples
+### Examples
 
 * [Card stack](http://gajus.com/sandbox/angular-swing/examples/card-stack/) using AngularJS directive.
 

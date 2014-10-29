@@ -12,7 +12,7 @@ AngularJS directive for [Swing](https://github.com/gajus/swing): A swipeable car
 ## Contents
 
 - [Usage](#usage)
-- [Usage Examples](#usage-examples)
+    - [Examples](#examples)
 - [Events](#events)
     - [Event Object](#event-object)
 - [Download](#download)
@@ -54,7 +54,7 @@ Attach event listeners to the instance of Card:
 </ul>
 ```
 
-## Usage Examples
+### Examples
 
 * [Card stack](http://gajus.com/sandbox/angular-swing/examples/card-stack/) using AngularJS directive.
 
