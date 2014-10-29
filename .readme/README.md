@@ -1,4 +1,4 @@
-# Swing
+# angular-swing
 
 [![Build Status](https://travis-ci.org/gajus/angular-swing.png?branch=master&decache1)](https://travis-ci.org/gajus/angular-swing)
 [![NPM version](https://badge.fury.io/js/angular-swing.svg)](http://badge.fury.io/js/angular-swing)
