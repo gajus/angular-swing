@@ -23,6 +23,14 @@ AngularJS directive for [Swing](https://github.com/gajus/swing): A swipeable car
 
 Include [./dist/angular-swing.js.](https://raw.githubusercontent.com/gajus/angular-swing/master/dist/swing.js).
 
+Load `gajus.swing` module, e.g.
+
+```js
+angular.module('your-module', ['gajus.swing']);
+```
+
+Loading `gajus.swing` module will make available the `swing-stack` and `swing-card` directives.
+
 Prepare a Swing stack:
 
 ```html
