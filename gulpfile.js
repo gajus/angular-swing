@@ -31,7 +31,7 @@ gulp.task('bundle', ['clean'], function () {
 });
 
 gulp.task('version', ['bundle'], function () {
-    var name = 'swing',
+    var name = 'angular-swing',
         pkg = jsonfile.readFileSync('./package.json'),
         bower = jsonfile.readFileSync('./bower.json');
 
