@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="./card-stack.css">
+
+    <script src="./../../bower_components/angular/angular.js"></script>
+    <script src="./../../dist/swing.min.js"></script>
+    
+    <script src="./card-stack.js"></script>
+</head>
+<body ng-app="card-stack-demo">
+    <div id="viewport" ng-controller="card-stack-playground">
+        <ul class="stack" swing-stack="">
+            <li
+                swing-card=""
+                swing-on-throwout="throwout(eventObject)"
+                swing-on-throwoutleft="throwoutleft(eventObject)"
+                swing-on-throwoutright="throwoutright(eventObject)"
+                swing-on-throwin="throwin(eventObject)"
+                swing-on-dragstart="dragstart(eventObject)"
+                swing-on-dragmove="dragmove(eventObject)"
+                swing-on-dragend="dragend(eventObject)"
+                
+                ng-repeat="card in cards"
+            >{{card.symbol}}</li>
+        </ul>
+    </div>
+    <div id="source">
+        <p>Drag the playing cards out of the stack and let go. Dragging them beyond the desk will throw them out of the stack. If you drag too little and let go, the cards will spring back into place. You can throw cards back into the stack after you have thrown them out.</p>
+        <p>Open the <a href="https://developer.chrome.com/devtools/docs/console">Console</a> to view the associated events.<p>
+        <p>Demonstration of <a href="https://github.com/gajus/angular-swing">https://github.com/gajus/angular-swing</a> implementation.</p>
+    </div>
+</body>
+</html>
