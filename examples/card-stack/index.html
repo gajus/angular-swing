@@ -14,13 +14,13 @@
         <ul class="stack" swing-stack>
             <li
                 swing-card
-                swing-on-throwout="console.log(eventName, eventObject)"
-                swing-on-throwoutleft="console.log(eventName, eventObject)"
-                swing-on-throwoutright="console.log(eventName, eventObject)"
-                swing-on-throwin="console.log(eventName, eventObject)"
-                swing-on-dragstart="console.log(eventName, eventObject)"
-                swing-on-dragmove="console.log(eventName, eventObject)"
-                swing-on-dragend="console.log(eventName, eventObject)"
+                swing-on-throwout="throwout(eventName, eventObject)"
+                swing-on-throwoutleft="throwoutleft(eventName, eventObject)"
+                swing-on-throwoutright="throwoutright(eventName, eventObject)"
+                swing-on-throwin="throwin(eventName, eventObject)"
+                swing-on-dragstart="dragstart(eventName, eventObject)"
+                swing-on-dragmove="dragmove(eventName, eventObject)"
+                swing-on-dragend="dragend(eventName, eventObject)"
                 ng-repeat="card in cards" ng-class="card.name">{{card.symbol}}</li>
         </ul>
     </div>
