@@ -8,31 +8,31 @@ angular
             {name: 'spades', symbol: '♠'}
         ];
 
-        $scope.throwout = function (eventObject) {
+        $scope.throwout = function (eventName, eventObject) {
             console.log('throwout', eventObject);
         };
 
-        $scope.throwoutleft = function (eventObject) {
+        $scope.throwoutleft = function (eventName, eventObject) {
             console.log('throwoutleft', eventObject);
         };
 
-        $scope.throwoutright = function (eventObject) {
+        $scope.throwoutright = function (eventName, eventObject) {
             console.log('throwoutright', eventObject);
         };
 
-        $scope.throwin = function (eventObject) {
+        $scope.throwin = function (eventName, eventObject) {
             console.log('throwin', eventObject);
         };
 
-        $scope.dragstart = function (eventObject) {
+        $scope.dragstart = function (eventName, eventObject) {
             console.log('dragstart', eventObject);
         };
 
-        $scope.dragmove = function (eventObject) {
+        $scope.dragmove = function (eventName, eventObject) {
             console.log('dragmove', eventObject);
         };
 
-        $scope.dragend = function (eventObject) {
+        $scope.dragend = function (eventName, eventObject) {
             console.log('dragend', eventObject);
         };
     });
