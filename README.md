@@ -1,26 +1,28 @@
-# angular-swing
+<!--
+This file has been generated using GitDown (https://github.com/gajus/gitdown).
+Direct edits to this will be be overwritten. Look for GitDown markup file under ./.gitdown/ path.
+-->
+<h1 id="angular-swing">angular-swing</h1>
 
-[![Build Status](https://travis-ci.org/gajus/angular-swing.png?branch=master&decache1)](https://travis-ci.org/gajus/angular-swing)
-[![NPM version](https://badge.fury.io/js/angular-swing.svg)](http://badge.fury.io/js/angular-swing)
-[![Bower version](https://badge.fury.io/bo/angular-swing.svg)](http://badge.fury.io/bo/angular-swing)
+[![Travis build status](http://img.shields.io/travis/gajus/angular-swing/master.svg?style=flat)](https://travis-ci.org/gajus/angular-swing)
+[![NPM version](http://img.shields.io/npm/v/angular-swing.svg?style=flat)](https://www.npmjs.org/package/angular-swing)
+[![Bower version](http://img.shields.io/bower/v/angular-swing.svg?style=flat)](http://bower.io/search/?q=angular-swing)
 
 AngularJS directive for [Swing](https://github.com/gajus/swing): A swipeable cards interface. The swipe-left/swipe-right for yes/no input. As seen in apps like [Jelly](http://jelly.co/) and [Tinder](http://www.gotinder.com/), and [many others](http://www.saydaily.com/2014/09/tinder-swipe-and-media).
 
 Give it a [swing](http://gajus.com/sandbox/swing/examples/card-stack/)! and please [tweet it](https://twitter.com/intent/retweet?tweet_id=527503484867084288) if you like it. : )
 
-![Card stack example.](./.readme/card-stack.gif)
+![Card stack example.](./.gitdown/card-stack.gif)
 
-## Contents
-
-- [Usage](#usage)
-    - [Examples](#examples)
-- [Events](#events)
-    - [Event Object](#event-object)
-- [Download](#download)
-
+* [angular-swing](#angular-swing)
+    * [Usage](#angular-swing-usage)
+        * [Examples](#angular-swing-usage-examples)
+    * [Events](#angular-swing-events)
+        * [Event Object](#angular-swing-events-event-object)
+    * [Download](#angular-swing-download)
 
 
-## Usage
+<h2 id="angular-swing-usage">Usage</h2>
 
 Include [./dist/angular-swing.js.](https://raw.githubusercontent.com/gajus/angular-swing/master/dist/swing.js).
 
@@ -88,7 +90,7 @@ $scope.add = function (name) {
 };
 ```
 
-### Examples
+<h3 id="angular-swing-usage-examples">Examples</h3>
 
 * [Card stack](http://gajus.com/sandbox/angular-swing/examples/card-stack/) using AngularJS directive.
 
@@ -98,7 +100,7 @@ The code for all of the examples is in the [./examples/](https://github.com/gaju
 
 [Raise an issue](https://github.com/gajus/angular-swing/issues) if you are missing an example.
 
-## Events
+<h2 id="angular-swing-events">Events</h2>
 
 [Swing Documentation](https://github.com/gajus/swing/#event-object) for the Events.
 
@@ -116,11 +118,11 @@ Swing events translate to the following attributes in the AngularJS directive:
 
 Event listener expression can use `eventName` and [`eventObject`](#event-object) parameters.
 
-### Event Object
+<h3 id="angular-swing-events-event-object">Event Object</h3>
 
 [Swing Documentation](https://github.com/gajus/swing/#event-object) for the Event Object.
 
-## Download
+<h2 id="angular-swing-download">Download</h2>
 
 Using [Bower](http://bower.io/):
 

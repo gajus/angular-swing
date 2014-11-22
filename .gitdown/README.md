@@ -1,16 +1,16 @@
 # angular-swing
 
-[![Build Status](https://travis-ci.org/gajus/angular-swing.png?branch=master&decache1)](https://travis-ci.org/gajus/angular-swing)
-[![NPM version](https://badge.fury.io/js/angular-swing.svg)](http://badge.fury.io/js/angular-swing)
-[![Bower version](https://badge.fury.io/bo/angular-swing.svg)](http://badge.fury.io/bo/angular-swing)
+{"gitdown": "badge", "name": "travis"}
+{"gitdown": "badge", "name": "npm-version"}
+{"gitdown": "badge", "name": "bower-version"}
 
 AngularJS directive for [Swing](https://github.com/gajus/swing): A swipeable cards interface. The swipe-left/swipe-right for yes/no input. As seen in apps like [Jelly](http://jelly.co/) and [Tinder](http://www.gotinder.com/), and [many others](http://www.saydaily.com/2014/09/tinder-swipe-and-media).
 
 Give it a [swing](http://gajus.com/sandbox/swing/examples/card-stack/)! and please [tweet it](https://twitter.com/intent/retweet?tweet_id=527503484867084288) if you like it. : )
 
-![Card stack example.](./.readme/card-stack.gif)
+![Card stack example.](./.gitdown/card-stack.gif)
 
-[toc 3]
+{"gitdown": "contents"}
 
 ## Usage
 
