@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="utf-8">
     <link rel="stylesheet" href="./card-stack.css">
 
     <script src="./../../bower_components/angular/angular.js"></script>
     <script src="./../../dist/angular-swing.js"></script>
-    
+
     <script src="./card-stack.js"></script>
 </head>
 <body ng-app="card-stack-demo">
@@ -13,13 +14,13 @@
         <ul class="stack" swing-stack>
             <li
                 swing-card
-                swing-on-throwout="console.log(eventName, eventObject)"
-                swing-on-throwoutleft="console.log(eventName, eventObject)"
-                swing-on-throwoutright="console.log(eventName, eventObject)"
-                swing-on-throwin="console.log(eventName, eventObject)"
-                swing-on-dragstart="console.log(eventName, eventObject)"
-                swing-on-dragmove="console.log(eventName, eventObject)"
-                swing-on-dragend="console.log(eventName, eventObject)"
+                swing-on-throwout="throwout(eventName, eventObject)"
+                swing-on-throwoutleft="throwoutleft(eventName, eventObject)"
+                swing-on-throwoutright="throwoutright(eventName, eventObject)"
+                swing-on-throwin="throwin(eventName, eventObject)"
+                swing-on-dragstart="dragstart(eventName, eventObject)"
+                swing-on-dragmove="dragmove(eventName, eventObject)"
+                swing-on-dragend="dragend(eventName, eventObject)"
                 ng-repeat="card in cards" ng-class="card.name">{{card.symbol}}</li>
         </ul>
     </div>
