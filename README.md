@@ -4,7 +4,6 @@ Direct edits to this will be be overwritten. Look for GitDown markup file under 
 -->
 <h1 id="angular-swing">angular-swing</h1>
 
-[![Travis build status](http://img.shields.io/travis/gajus/angular-swing/master.svg?style=flat)](https://travis-ci.org/gajus/angular-swing)
 [![NPM version](http://img.shields.io/npm/v/angular-swing.svg?style=flat)](https://www.npmjs.org/package/angular-swing)
 [![Bower version](http://img.shields.io/bower/v/angular-swing.svg?style=flat)](http://bower.io/search/?q=angular-swing)
 

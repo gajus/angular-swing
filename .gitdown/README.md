@@ -1,6 +1,5 @@
 # angular-swing
 
-{"gitdown": "badge", "name": "travis"}
 {"gitdown": "badge", "name": "npm-version"}
 {"gitdown": "badge", "name": "bower-version"}
 
