@@ -5,11 +5,28 @@ angular
     .directive('swingStack', function () {
         return {
             restrict: 'A',
-            scope: {},
-            controller: function () {
+            scope: {
+              isThrowOut: '&',
+              throwOutConfidence: '&'
+            },
+            controller: function ($scope) {
                 var stack;
 
-                stack = Swing.Stack();
+                var config = { };
+
+                if ($scope.isThrowOut) {
+                  config.isThrowOut = function (offset, elementWidth) {
+                    return $scope.isThrowOut({ offset: offset, elementWidth: elementWidth });
+                  }
+                }
+
+                if ($scope.throwOutConfidence) {
+                  config.throwOutConfidence = function (offset, elementWidth) {
+                    return $scope.throwOutConfidence({ offset: offset, elementWidth: elementWidth });
+                  }
+                }
+
+                stack = Swing.Stack(config);
 
                 this.add = function (cardElement) {
                     return stack.createCard(cardElement);
