@@ -50,7 +50,9 @@ Add a Card to the Swing stack:
 Attach event listeners to the instance of Card:
 
 ```html
-<ul swing-stack>
+<ul swing-stack
+    swing-throw-out-confidence="throwOutConfidence(offset, elementWidth)"
+    swing-is-throw-out="isThrowOut(offset, elementWidth, throwOutConfidence)">
     <li
         swing-card
         swing-on-throwout="console.log(eventName, eventObject)"
@@ -62,6 +64,20 @@ Attach event listeners to the instance of Card:
         swing-on-dragend="console.log(eventName, eventObject)"
         ></li>
 </ul>
+```
+
+```js
+//Returns a value between 0 and 1 indicating the completeness of the throw out condition.
+$scope.throwOutConfidence = function (offset, elementWidth) {
+    console.log('throwOutConfidence', offset, elementWidth);
+    return Math.min(Math.abs(offset) / elementWidth, 1);
+};
+
+//Determines if element is being thrown out of the stack.
+$scope.isThrowOut = function (offset, elementWidth, throwOutConfidence) {
+   console.log('isThrowOut', offset, elementWidth, throwOutConfidence);
+   return throwOutConfidence === 1;
+};
 ```
 
 Use scope variables/methods to add/remove cards:
