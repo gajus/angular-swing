@@ -35,4 +35,14 @@ angular
         $scope.dragend = function (eventName, eventObject) {
             console.log('dragend', eventObject);
         };
+
+        $scope.throwOutConfidence = function (offset, elementWidth) {
+            console.log('throwOutConfidence', offset, elementWidth);
+            return Math.min(Math.abs(offset) / elementWidth, 1);
+        };
+
+        $scope.isThrowOut = function (offset, elementWidth, throwOutConfidence) {
+            console.log('isThrowOut', offset, elementWidth, throwOutConfidence);
+            return throwOutConfidence === 1;
+        };
     });
