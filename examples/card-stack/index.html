@@ -11,7 +11,7 @@
 </head>
 <body ng-app="card-stack-demo">
     <div id="viewport" ng-controller="card-stack-playground as card">
-        <ul class="stack" swing-stack swing-throw-out-confidence="throwOutConfidence(offset, elementWidth)" swing-is-throw-out="isThrowOut(offset, elementWidth, throwOutConfidence)">
+        <ul class="stack" swing-stack swing-options="options">
             <li
                 swing-card
                 swing-on-throwout="throwout(eventName, eventObject)"

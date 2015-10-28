@@ -2,26 +2,18 @@ var Swing = require('swing');
 
 angular
     .module('gajus.swing', [])
-    .directive('swingStack', function () {
+    .directive('swingStack', function ($parse) {
         return {
             restrict: 'A',
-            scope: {
-                swingThrowOutConfidence: '&',
-                swingIsThrowOut: '&'
-            },
-            controller: function ($scope) {
-                var stack;
+            controller: function ($scope, $element, $attrs) {
+                var stack,
+                    defaultOptions = {};
 
-                var config = {
-                    throwOutConfidence: function (offset, element) {
-                        return $scope.swingThrowOutConfidence({"offset": offset, "elementWidth": element.offsetWidth});
-                    },
-                    isThrowOut: function (offset, element, throwOutConfidence) {
-                        return $scope.swingIsThrowOut({"offset": offset, "elementWidth": element.offsetWidth, "throwOutConfidence": throwOutConfidence});
-                    }
-                };
+                var options = $parse($attrs.swingOptions)($scope);
 
-                stack = Swing.Stack(config);
+                angular.extend(defaultOptions, options);
+
+                stack = Swing.Stack(defaultOptions);
 
                 this.add = function (cardElement) {
                     return stack.createCard(cardElement);
@@ -29,7 +21,7 @@ angular
             }
         };
     })
-    .directive('swingCard', function ($interval) {
+    .directive('swingCard', function () {
         return {
             restrict: 'A',
             require: '^swingStack',
