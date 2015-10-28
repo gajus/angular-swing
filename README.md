@@ -67,12 +67,12 @@ Attach event listeners to the instance of Card:
 Use scope variable to change Swing Stack default options: 
 ```js
 $scope.options = {
-    throwOutConfidence: function (offset, elementWidth) {
-        console.log('throwOutConfidence', offset, elementWidth);
-        return Math.min(Math.abs(offset) / elementWidth, 1);
+    throwOutConfidence: function (offset, element) {
+        console.log('throwOutConfidence', offset, element.offsetWidth);
+        return Math.min(Math.abs(offset) / element.offsetWidth, 1);
     },
-    isThrowOut: function (offset, elementWidth, throwOutConfidence) {
-        console.log('isThrowOut', offset, elementWidth, throwOutConfidence);
+    isThrowOut: function (offset, element, throwOutConfidence) {
+        console.log('isThrowOut', offset, element.offsetWidth, throwOutConfidence);
         return throwOutConfidence === 1;
     }
 };
