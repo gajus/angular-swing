@@ -18,7 +18,9 @@ gulp.task('lint', function () {
 });
 
 gulp.task('clean', ['lint'], function (cb) {
-    del(['dist'], cb);
+    del(['dist']).then(function() {
+        cb();
+    });
 });
 
 gulp.task('bundle', ['clean'], function () {

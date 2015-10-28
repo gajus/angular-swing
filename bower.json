@@ -1,18 +1,1 @@
-{
-  "main": "dist/angular-swing.min.js",
-  "name": "angular-swing",
-  "description": "AngularJS directive for Swing: A swipeable cards interface. The swipe-left/swipe-right for yes/no input. As seen in apps like Jelly and Tinder.",
-  "version": "1.0.0",
-  "license": "BSD-3-Clause",
-  "authors": [
-    "Gajus Kuizinas <gk@anuary.com>"
-  ],
-  "keywords": [
-    "swipe",
-    "cards",
-    "swipeable"
-  ],
-  "devDependencies": {
-    "angular": "~1.3.0"
-  }
-}
+{"main":"dist/angular-swing.min.js","name":"angular-swing","description":"AngularJS directive for Swing: A swipeable cards interface. The swipe-left/swipe-right for yes/no input. As seen in apps like Jelly and Tinder.","version":"2.0.0","license":"BSD-3-Clause","authors":["Gajus Kuizinas <gk@anuary.com>"],"keywords":["swipe","cards","swipeable"],"devDependencies":{"angular":"~1.4.7"}}

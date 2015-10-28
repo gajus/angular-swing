@@ -2,14 +2,18 @@ var Swing = require('swing');
 
 angular
     .module('gajus.swing', [])
-    .directive('swingStack', function () {
+    .directive('swingStack', function ($parse) {
         return {
             restrict: 'A',
-            scope: {},
-            controller: function () {
-                var stack;
+            controller: function ($scope, $element, $attrs) {
+                var stack,
+                    defaultOptions = {};
 
-                stack = Swing.Stack();
+                var options = $parse($attrs.swingOptions)($scope);
+
+                angular.extend(defaultOptions, options);
+
+                stack = Swing.Stack(defaultOptions);
 
                 this.add = function (cardElement) {
                     return stack.createCard(cardElement);
@@ -31,6 +35,7 @@ angular
                 swingOnDragend: '&'
             },
             link: function (scope, element, attrs, swingStack) {
+
                 var card = swingStack.add(element[0]),
                     events = ['throwout', 'throwoutleft', 'throwoutright', 'throwin', 'dragstart', 'dragmove', 'dragend'];
 
@@ -39,7 +44,10 @@ angular
                 // @see https://docs.angularjs.org/api/ng/service/$compile#comprehensive-directive-api
                 angular.forEach(events, function (eventName) {
                     card.on(eventName, function (eventObject) {
-                        scope['swingOn' + eventName.charAt(0).toUpperCase() + eventName.slice(1)]({eventName: eventName, eventObject: eventObject});
+                        scope['swingOn' + eventName.charAt(0).toUpperCase() + eventName.slice(1)]({
+                            eventName: eventName,
+                            eventObject: eventObject
+                        });
                     });
                 });
             }
