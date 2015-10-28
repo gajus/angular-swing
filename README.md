@@ -50,9 +50,7 @@ Add a Card to the Swing stack:
 Attach event listeners to the instance of Card:
 
 ```html
-<ul swing-stack
-    swing-throw-out-confidence="throwOutConfidence(offset, elementWidth)"
-    swing-is-throw-out="isThrowOut(offset, elementWidth, throwOutConfidence)">
+<ul swing-stack>
     <li
         swing-card
         swing-on-throwout="console.log(eventName, eventObject)"
@@ -66,18 +64,22 @@ Attach event listeners to the instance of Card:
 </ul>
 ```
 
+Use scope variable to change Swing Stack default options: 
 ```js
-//Returns a value between 0 and 1 indicating the completeness of the throw out condition.
-$scope.throwOutConfidence = function (offset, elementWidth) {
-    console.log('throwOutConfidence', offset, elementWidth);
-    return Math.min(Math.abs(offset) / elementWidth, 1);
+$scope.options = {
+    throwOutConfidence: function (offset, elementWidth) {
+        console.log('throwOutConfidence', offset, elementWidth);
+        return Math.min(Math.abs(offset) / elementWidth, 1);
+    },
+    isThrowOut: function (offset, elementWidth, throwOutConfidence) {
+        console.log('isThrowOut', offset, elementWidth, throwOutConfidence);
+        return throwOutConfidence === 1;
+    }
 };
+```
 
-//Determines if element is being thrown out of the stack.
-$scope.isThrowOut = function (offset, elementWidth, throwOutConfidence) {
-   console.log('isThrowOut', offset, elementWidth, throwOutConfidence);
-   return throwOutConfidence === 1;
-};
+```html
+<ul swing-stack swing-options="options">...</ul>
 ```
 
 Use scope variables/methods to add/remove cards:
