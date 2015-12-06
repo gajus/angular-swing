@@ -1,11 +1,15 @@
 var Swing = require('swing');
 
-angular
-    .module('gajus.swing', [])
-    .directive('swingStack', function ($parse) {
+(function(angular, Swing, undefined) {
+
+    "use strict";
+
+    angular.module('gajus.swing', []);
+
+    angular.module('gajus.swing').directive('swingStack', /* @ngInject */ function ($parse) {
         return {
             restrict: 'A',
-            controller: function ($scope, $element, $attrs) {
+            controller: /* @ngInject */ function ($scope, $element, $attrs) {
                 var stack,
                     defaultOptions = {};
 
@@ -20,8 +24,9 @@ angular
                 };
             }
         };
-    })
-    .directive('swingCard', function () {
+    });
+
+    angular.module('gajus.swing').directive('swingCard', function () {
         return {
             restrict: 'A',
             require: '^swingStack',
@@ -34,7 +39,7 @@ angular
                 swingOnDragmove: '&',
                 swingOnDragend: '&'
             },
-            link: function (scope, element, attrs, swingStack) {
+            link: /* @ngInject */ function (scope, element, attrs, swingStack) {
 
                 var card = swingStack.add(element[0]),
                     events = ['throwout', 'throwoutleft', 'throwoutright', 'throwin', 'dragstart', 'dragmove', 'dragend'];
@@ -53,3 +58,5 @@ angular
             }
         };
     });
+
+})(angular, Swing);
