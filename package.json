@@ -6,7 +6,7 @@
     "cards",
     "swipeable"
   ],
-  "version": "2.0.0",
+  "version": "2.1.0",
   "main": "src/angular-swing.js",
   "author": "Gajus Kuizinas <gk@anuary.com>",
   "repository": {
@@ -22,6 +22,7 @@
     "gulp-browserify": "^0.5.1",
     "gulp-header": "^1.7.1",
     "gulp-jshint": "^1.11.2",
+    "gulp-ng-annotate": "^1.1.0",
     "gulp-rename": "^1.2.2",
     "gulp-uglify": "^1.4.2",
     "jshint-stylish": "^2.0.1",
