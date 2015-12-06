@@ -6918,12 +6918,16 @@ module.exports.dash = dashedPrefix;
 },{}],76:[function(require,module,exports){
 var Swing = require('swing');
 
-angular
-    .module('gajus.swing', [])
-    .directive('swingStack', function ($parse) {
+(function(angular, Swing, undefined) {
+
+    "use strict";
+
+    angular.module('gajus.swing', []);
+
+    angular.module('gajus.swing').directive('swingStack', /* @ngInject */ ["$parse", function ($parse) {
         return {
             restrict: 'A',
-            controller: function ($scope, $element, $attrs) {
+            controller: /* @ngInject */ ["$scope", "$element", "$attrs", function ($scope, $element, $attrs) {
                 var stack,
                     defaultOptions = {};
 
@@ -6936,10 +6940,11 @@ angular
                 this.add = function (cardElement) {
                     return stack.createCard(cardElement);
                 };
-            }
+            }]
         };
-    })
-    .directive('swingCard', function () {
+    }]);
+
+    angular.module('gajus.swing').directive('swingCard', function () {
         return {
             restrict: 'A',
             require: '^swingStack',
@@ -6952,7 +6957,7 @@ angular
                 swingOnDragmove: '&',
                 swingOnDragend: '&'
             },
-            link: function (scope, element, attrs, swingStack) {
+            link: /* @ngInject */ ["scope", "element", "attrs", "swingStack", function (scope, element, attrs, swingStack) {
 
                 var card = swingStack.add(element[0]),
                     events = ['throwout', 'throwoutleft', 'throwoutright', 'throwin', 'dragstart', 'dragmove', 'dragend'];
@@ -6968,7 +6973,9 @@ angular
                         });
                     });
                 });
-            }
+            }]
         };
     });
+
+})(angular, Swing);
 },{"swing":72}]},{},[76])
