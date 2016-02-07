@@ -1,5 +1,5 @@
 /**
- * @version 2.0.0
+ * @version 2.1.0
  * @link https://github.com/gajus/angular-swing for the canonical source repository
  * @license https://github.com/gajus/angular-swing/blob/master/LICENSE BSD 3-Clause
  */
@@ -69,15 +69,737 @@ process.chdir = function (dir) {
 };
 
 },{}],2:[function(require,module,exports){
-/*! Hammer.JS - v2.0.4 - 2014-09-28
+(function (global){
+'use strict';
+
+Object.defineProperty(exports, '__esModule', {
+    value: true
+});
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+var _sister = require('sister');
+
+var _sister2 = _interopRequireDefault(_sister);
+
+var _hammerjs = require('hammerjs');
+
+var _hammerjs2 = _interopRequireDefault(_hammerjs);
+
+var _rebound = require('rebound');
+
+var _rebound2 = _interopRequireDefault(_rebound);
+
+var _vendorPrefix = require('vendor-prefix');
+
+var _vendorPrefix2 = _interopRequireDefault(_vendorPrefix);
+
+var _utilJs = require('./util.js');
+
+var _utilJs2 = _interopRequireDefault(_utilJs);
+
+var _raf = require('raf');
+
+var _raf2 = _interopRequireDefault(_raf);
+
+var Card = undefined;
+
+/**
+ * @param {Stack} stack
+ * @param {HTMLElement} targetElement
+ * @return {Object} An instance of Card.
+ */
+Card = function (stack, targetElement) {
+    var card = undefined,
+        config = undefined,
+        construct = undefined,
+        currentX = undefined,
+        currentY = undefined,
+        doMove = undefined,
+        eventEmitter = undefined,
+        isDraging = undefined,
+        lastThrow = undefined,
+        lastTranslate = undefined,
+        lastX = undefined,
+        lastY = undefined,
+        mc = undefined,
+        _onSpringUpdate = undefined,
+        springSystem = undefined,
+        springThrowIn = undefined,
+        springThrowOut = undefined,
+        throwOutDistance = undefined,
+        throwWhere = undefined;
+
+    construct = function () {
+        card = {};
+        config = Card.makeConfig(stack.getConfig());
+        eventEmitter = (0, _sister2['default'])();
+        springSystem = stack.getSpringSystem();
+        springThrowIn = springSystem.createSpring(250, 10);
+        springThrowOut = springSystem.createSpring(500, 20);
+        lastThrow = {};
+        lastTranslate = {
+            x: 0,
+            y: 0
+        };
+
+        springThrowIn.setRestSpeedThreshold(0.05);
+        springThrowIn.setRestDisplacementThreshold(0.05);
+
+        springThrowOut.setRestSpeedThreshold(0.05);
+        springThrowOut.setRestDisplacementThreshold(0.05);
+
+        throwOutDistance = config.throwOutDistance(config.minThrowOutDistance, config.maxThrowOutDistance);
+
+        mc = new _hammerjs2['default'].Manager(targetElement, {
+            recognizers: [[_hammerjs2['default'].Pan, {
+                threshold: 2
+            }]]
+        });
+
+        Card.appendToParent(targetElement);
+
+        eventEmitter.on('panstart', function () {
+            Card.appendToParent(targetElement);
+
+            eventEmitter.trigger('dragstart', {
+                target: targetElement
+            });
+
+            currentX = 0;
+            currentY = 0;
+
+            isDraging = true;
+
+            (function animation() {
+                if (isDraging) {
+                    doMove();
+
+                    (0, _raf2['default'])(animation);
+                }
+            })();
+        });
+
+        eventEmitter.on('panmove', function (e) {
+            currentX = e.deltaX;
+            currentY = e.deltaY;
+        });
+
+        eventEmitter.on('panend', function (e) {
+            var x = undefined,
+                y = undefined;
+
+            isDraging = false;
+
+            x = lastTranslate.x + e.deltaX;
+            y = lastTranslate.y + e.deltaY;
+
+            if (config.isThrowOut(x, targetElement, config.throwOutConfidence(x, targetElement))) {
+                card.throwOut(x, y);
+            } else {
+                card.throwIn(x, y);
+            }
+
+            eventEmitter.trigger('dragend', {
+                target: targetElement
+            });
+        });
+
+        // "mousedown" event fires late on touch enabled devices, thus listening
+        // to the touchstart event for touch enabled devices and mousedown otherwise.
+        if (_utilJs2['default'].isTouchDevice()) {
+            targetElement.addEventListener('touchstart', function () {
+                eventEmitter.trigger('panstart');
+            });
+
+            // Disable scrolling while dragging the element on the touch enabled devices.
+            // @see http://stackoverflow.com/a/12090055/368691
+            (function () {
+                var dragging = undefined;
+
+                targetElement.addEventListener('touchstart', function () {
+                    dragging = true;
+                });
+
+                targetElement.addEventListener('touchend', function () {
+                    dragging = false;
+                });
+
+                global.addEventListener('touchmove', function (e) {
+                    if (dragging) {
+                        e.preventDefault();
+                    }
+                });
+            })();
+        } else {
+            targetElement.addEventListener('mousedown', function () {
+                eventEmitter.trigger('panstart');
+            });
+        }
+
+        mc.on('panmove', function (e) {
+            eventEmitter.trigger('panmove', e);
+        });
+
+        mc.on('panend', function (e) {
+            eventEmitter.trigger('panend', e);
+        });
+
+        springThrowIn.addListener({
+            onSpringUpdate: function onSpringUpdate(spring) {
+                var value = undefined,
+                    x = undefined,
+                    y = undefined;
+
+                value = spring.getCurrentValue();
+                x = _rebound2['default'].MathUtil.mapValueInRange(value, 0, 1, lastThrow.fromX, 0);
+                y = _rebound2['default'].MathUtil.mapValueInRange(value, 0, 1, lastThrow.fromY, 0);
+
+                _onSpringUpdate(x, y);
+            },
+            onSpringAtRest: function onSpringAtRest() {
+                eventEmitter.trigger('throwinend', {
+                    target: targetElement
+                });
+            }
+        });
+
+        springThrowOut.addListener({
+            onSpringUpdate: function onSpringUpdate(spring) {
+                var value = undefined,
+                    x = undefined,
+                    y = undefined;
+
+                value = spring.getCurrentValue();
+                x = _rebound2['default'].MathUtil.mapValueInRange(value, 0, 1, lastThrow.fromX, throwOutDistance * lastThrow.direction);
+                y = lastThrow.fromY;
+
+                _onSpringUpdate(x, y);
+            },
+            onSpringAtRest: function onSpringAtRest() {
+                eventEmitter.trigger('throwoutend', {
+                    target: targetElement
+                });
+            }
+        });
+
+        /**
+         * Transforms card position based on the current environment variables.
+         *
+         * @return {undefined}
+         */
+        doMove = function () {
+            var r = undefined,
+                x = undefined,
+                y = undefined;
+
+            if (currentX === lastX && currentY === lastY) {
+                return;
+            }
+
+            lastX = currentX;
+            lastY = currentY;
+
+            x = lastTranslate.x + currentX;
+            y = lastTranslate.y + currentY;
+            r = config.rotation(x, y, targetElement, config.maxRotation);
+
+            config.transform(targetElement, x, y, r);
+
+            eventEmitter.trigger('dragmove', {
+                target: targetElement,
+                throwOutConfidence: config.throwOutConfidence(x, targetElement),
+                throwDirection: x < 0 ? Card.DIRECTION_LEFT : Card.DIRECTION_RIGHT
+            });
+        };
+
+        /**
+         * Invoked every time the physics solver updates the Spring's value.
+         *
+         * @param {Number} x
+         * @param {Number} y
+         * @return {undefined}
+         */
+        _onSpringUpdate = function (x, y) {
+            var r = undefined;
+
+            r = config.rotation(x, y, targetElement, config.maxRotation);
+
+            lastTranslate.x = x || 0;
+            lastTranslate.y = y || 0;
+
+            Card.transform(targetElement, x, y, r);
+        };
+
+        /**
+         * @param {Card.THROW_IN|Card.THROW_OUT} where
+         * @param {Number} fromX
+         * @param {Number} fromY
+         * @return {undefined}
+         */
+        throwWhere = function (where, fromX, fromY) {
+            lastThrow.fromX = fromX;
+            lastThrow.fromY = fromY;
+            lastThrow.direction = lastThrow.fromX < 0 ? Card.DIRECTION_LEFT : Card.DIRECTION_RIGHT;
+
+            if (where === Card.THROW_IN) {
+                springThrowIn.setCurrentValue(0).setAtRest().setEndValue(1);
+
+                eventEmitter.trigger('throwin', {
+                    target: targetElement,
+                    throwDirection: lastThrow.direction
+                });
+            } else if (where === Card.THROW_OUT) {
+                springThrowOut.setCurrentValue(0).setAtRest().setVelocity(100).setEndValue(1);
+
+                eventEmitter.trigger('throwout', {
+                    target: targetElement,
+                    throwDirection: lastThrow.direction
+                });
+
+                if (lastThrow.direction === Card.DIRECTION_LEFT) {
+                    eventEmitter.trigger('throwoutleft', {
+                        target: targetElement,
+                        throwDirection: lastThrow.direction
+                    });
+                } else {
+                    eventEmitter.trigger('throwoutright', {
+                        target: targetElement,
+                        throwDirection: lastThrow.direction
+                    });
+                }
+            } else {
+                throw new Error('Invalid throw event.');
+            }
+        };
+    };
+
+    construct();
+
+    /**
+     * Alias
+     */
+    card.on = eventEmitter.on;
+    card.trigger = eventEmitter.trigger;
+
+    /**
+     * Throws a card into the stack from an arbitrary position.
+     *
+     * @param {Number} fromX
+     * @param {Number} fromY
+     * @return {undefined}
+     */
+    card.throwIn = function (fromX, fromY) {
+        throwWhere(Card.THROW_IN, fromX, fromY);
+    };
+
+    /**
+     * Throws a card out of the stack in the direction away from the original offset.
+     *
+     * @param {Number} fromX
+     * @param {Number} fromY
+     * @return {undefined}
+     */
+    card.throwOut = function (fromX, fromY) {
+        throwWhere(Card.THROW_OUT, fromX, fromY);
+    };
+
+    /**
+     * Unbinds all Hammer.Manager events.
+     * Removes the listeners from the physics simulation.
+     *
+     * @return {undefined}
+     */
+    card.destroy = function () {
+        mc.destroy();
+        springThrowIn.destroy();
+        springThrowOut.destroy();
+
+        stack.destroyCard(card);
+    };
+
+    return card;
+};
+
+/**
+ * Creates a configuration object.
+ *
+ * @param {Object} config
+ * @return {Object}
+ */
+Card.makeConfig = function () {
+    var config = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+    var defaultConfig = undefined;
+
+    defaultConfig = {
+        isThrowOut: Card.isThrowOut,
+        throwOutConfidence: Card.throwOutConfidence,
+        throwOutDistance: Card.throwOutDistance,
+        minThrowOutDistance: 400,
+        maxThrowOutDistance: 500,
+        rotation: Card.rotation,
+        maxRotation: 20,
+        transform: Card.transform
+    };
+
+    return _utilJs2['default'].assign({}, defaultConfig, config);
+};
+
+/**
+ * Uses CSS transform to translate element position and rotation.
+ *
+ * Invoked in the event of `dragmove` and every time the physics solver is triggered.
+ *
+ * @param {HTMLElement} element
+ * @param {Number} x Horizontal offset from the startDrag.
+ * @param {Number} y Vertical offset from the startDrag.
+ * @param {Number} r
+ * @return {undefined}
+ */
+Card.transform = function (element, x, y, r) {
+    element.style[(0, _vendorPrefix2['default'])('transform')] = 'translate3d(0, 0, 0) translate(' + x + 'px, ' + y + 'px) rotate(' + r + 'deg)';
+};
+
+/**
+ * Append element to the parentNode.
+ *
+ * This makes the element first among the siblings. The reason for using
+ * this as opposed to zIndex is to allow CSS selector :nth-child.
+ *
+ * Invoked in the event of mousedown.
+ * Invoked when card is added to the stack.
+ *
+ * @param {HTMLElement} element The target element.
+ * @return {undefined}
+ */
+Card.appendToParent = function (element) {
+    var parentNode = undefined,
+        siblings = undefined,
+        targetIndex = undefined;
+
+    parentNode = element.parentNode;
+    siblings = _utilJs2['default'].elementChildren(parentNode);
+    targetIndex = siblings.indexOf(element);
+
+    if (targetIndex + 1 !== siblings.length) {
+        parentNode.removeChild(element);
+        parentNode.appendChild(element);
+    }
+};
+
+/**
+ * Returns a value between 0 and 1 indicating the completeness of the throw out condition.
+ *
+ * Ration of the absolute distance from the original card position and element width.
+ *
+ * @param {Number} offset Distance from the dragStart.
+ * @param {HTMLElement} element Element.
+ * @return {Number}
+ */
+Card.throwOutConfidence = function (offset, element) {
+    return Math.min(Math.abs(offset) / element.offsetWidth, 1);
+};
+
+/**
+ * Determines if element is being thrown out of the stack.
+ *
+ * Element is considered to be thrown out when throwOutConfidence is equal to 1.
+ *
+ * @param {Number} offset Distance from the dragStart.
+ * @param {HTMLElement} element Element.
+ * @param {Number} throwOutConfidence config.throwOutConfidence
+ * @return {Boolean}
+ */
+Card.isThrowOut = function (offset, element, throwOutConfidence) {
+    return throwOutConfidence === 1;
+};
+
+/**
+ * Calculates a distances at which the card is thrown out of the stack.
+ *
+ * @param {Number} min
+ * @param {Number} max
+ * @return {Number}
+ */
+Card.throwOutDistance = function (min, max) {
+    return _utilJs2['default'].random(min, max);
+};
+
+/**
+ * Calculates rotation based on the element x and y offset, element width and maxRotation variables.
+ *
+ * @param {Number} x Horizontal offset from the startDrag.
+ * @param {Number} y Vertical offset from the startDrag.
+ * @param {HTMLElement} element Element.
+ * @param {Number} maxRotation
+ * @return {Number} Rotation angle expressed in degrees.
+ */
+Card.rotation = function (x, y, element, maxRotation) {
+    var horizontalOffset = undefined,
+        rotation = undefined,
+        verticalOffset = undefined;
+
+    horizontalOffset = Math.min(Math.max(x / element.offsetWidth, -1), 1);
+    verticalOffset = (y > 0 ? 1 : -1) * Math.min(Math.abs(y) / 100, 1);
+    rotation = horizontalOffset * verticalOffset * maxRotation;
+
+    return rotation;
+};
+
+Card.DIRECTION_LEFT = -1;
+Card.DIRECTION_RIGHT = 1;
+
+Card.THROW_IN = 'in';
+Card.THROW_OUT = 'out';
+
+exports['default'] = Card;
+module.exports = exports['default'];
+//# sourceMappingURL=card.js.map
+}).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./util.js":5,"hammerjs":6,"raf":71,"rebound":73,"sister":74,"vendor-prefix":75}],3:[function(require,module,exports){
+(function (global){
+'use strict';
+
+Object.defineProperty(exports, '__esModule', {
+    value: true
+});
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+var _stack = require('./stack');
+
+var _stack2 = _interopRequireDefault(_stack);
+
+var _card = require('./card');
+
+var _card2 = _interopRequireDefault(_card);
+
+global.gajus = global.gajus || {};
+
+global.gajus.Swing = {
+    Stack: _stack2['default'],
+    Card: _card2['default']
+};
+
+exports.Stack = _stack2['default'];
+exports.Card = _card2['default'];
+//# sourceMappingURL=index.js.map
+}).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./card":2,"./stack":4}],4:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, '__esModule', {
+    value: true
+});
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+var _sister = require('sister');
+
+var _sister2 = _interopRequireDefault(_sister);
+
+var _rebound = require('rebound');
+
+var _rebound2 = _interopRequireDefault(_rebound);
+
+var _card = require('./card');
+
+var _card2 = _interopRequireDefault(_card);
+
+var _util = require('./util');
+
+var _util2 = _interopRequireDefault(_util);
+
+var Stack = undefined;
+
+/**
+ * @param {Object} config Stack configuration.
+ * @return {Object} An instance of Stack object.
+ */
+Stack = function (config) {
+    var construct = undefined,
+        eventEmitter = undefined,
+        index = undefined,
+        springSystem = undefined,
+        stack = undefined;
+
+    construct = function () {
+        stack = {};
+        springSystem = new _rebound2['default'].SpringSystem();
+        eventEmitter = (0, _sister2['default'])();
+        index = [];
+    };
+
+    construct();
+
+    /**
+     * Get the configuration object.
+     *
+     * @return {Object}
+     */
+    stack.getConfig = function () {
+        return config;
+    };
+
+    /**
+     * Get a singleton instance of the SpringSystem physics engine.
+     *
+     * @return {Sister}
+     */
+    stack.getSpringSystem = function () {
+        return springSystem;
+    };
+
+    /**
+     * Proxy to the instance of the event emitter.
+     *
+     * @param {String} eventName
+     * @param {String} listener
+     * @return {undefined}
+     */
+    stack.on = function (eventName, listener) {
+        eventEmitter.on(eventName, listener);
+    };
+
+    /**
+     * Creates an instance of Card and associates it with an element.
+     *
+     * @param {HTMLElement} element
+     * @return {Card}
+     */
+    stack.createCard = function (element) {
+        var card = undefined,
+            events = undefined;
+
+        card = (0, _card2['default'])(stack, element);
+
+        events = ['throwout', 'throwoutend', 'throwoutleft', 'throwoutright', 'throwin', 'throwinend', 'dragstart', 'dragmove', 'dragend'];
+
+        // Proxy Card events to the Stack.
+        events.forEach(function (eventName) {
+            card.on(eventName, function (data) {
+                eventEmitter.trigger(eventName, data);
+            });
+        });
+
+        index.push({
+            element: element,
+            card: card
+        });
+
+        return card;
+    };
+
+    /**
+     * Returns an instance of Card associated with an element.
+     *
+     * @param {HTMLElement} element
+     * @return {Card|null}
+     */
+    stack.getCard = function (element) {
+        var card = undefined;
+
+        card = _util2['default'].find(index, {
+            element: element
+        });
+
+        if (card) {
+            return card.card;
+        }
+
+        return null;
+    };
+
+    /**
+     * Remove an instance of Card from the stack index.
+     *
+     * @param {Card} card
+     * @return {Card}
+     */
+    stack.destroyCard = function (card) {
+        return _util2['default'].remove(index, card);
+    };
+
+    return stack;
+};
+
+exports['default'] = Stack;
+module.exports = exports['default'];
+//# sourceMappingURL=stack.js.map
+},{"./card":2,"./util":5,"rebound":73,"sister":74}],5:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, '__esModule', {
+    value: true
+});
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+var _lodashArrayRemove = require('lodash/array/remove');
+
+var _lodashArrayRemove2 = _interopRequireDefault(_lodashArrayRemove);
+
+var _lodashObjectAssign = require('lodash/object/assign');
+
+var _lodashObjectAssign2 = _interopRequireDefault(_lodashObjectAssign);
+
+var _lodashNumberRandom = require('lodash/number/random');
+
+var _lodashNumberRandom2 = _interopRequireDefault(_lodashNumberRandom);
+
+var _lodashCollectionFind = require('lodash/collection/find');
+
+var _lodashCollectionFind2 = _interopRequireDefault(_lodashCollectionFind);
+
+var _lodashCollectionWhere = require('lodash/collection/where');
+
+var _lodashCollectionWhere2 = _interopRequireDefault(_lodashCollectionWhere);
+
+var util = undefined;
+
+util = {};
+
+util.remove = _lodashArrayRemove2['default'];
+util.assign = _lodashObjectAssign2['default'];
+util.random = _lodashNumberRandom2['default'];
+util.find = _lodashCollectionFind2['default'];
+util.where = _lodashCollectionWhere2['default'];
+
+/**
+ * Return direct children elements.
+ *
+ * @see http://stackoverflow.com/a/27102446/368691
+ * @param {HTMLElement} element
+ * @return {Array}
+ */
+util.elementChildren = function (element) {
+    return util.where(element.childNodes, {
+        nodeType: 1
+    });
+};
+
+/**
+ * @see http://stackoverflow.com/questions/4817029/whats-the-best-way-to-detect-a-touch-screen-device-using-javascript/4819886#4819886
+ * @return {Boolean}
+ */
+util.isTouchDevice = function () {
+    return 'ontouchstart' in window || navigator.msMaxTouchPoints;
+};
+
+exports['default'] = util;
+module.exports = exports['default'];
+//# sourceMappingURL=util.js.map
+},{"lodash/array/remove":8,"lodash/collection/find":10,"lodash/collection/where":11,"lodash/number/random":64,"lodash/object/assign":65}],6:[function(require,module,exports){
+/*! Hammer.JS - v2.0.6 - 2015-12-23
  * http://hammerjs.github.io/
  *
- * Copyright (c) 2014 Jorik Tangelder;
- * Licensed under the MIT license */
+ * Copyright (c) 2015 Jorik Tangelder;
+ * Licensed under the  license */
 (function(window, document, exportName, undefined) {
   'use strict';
 
-var VENDOR_PREFIXES = ['', 'webkit', 'moz', 'MS', 'ms', 'o'];
+var VENDOR_PREFIXES = ['', 'webkit', 'Moz', 'MS', 'ms', 'o'];
 var TEST_ELEMENT = document.createElement('div');
 
 var TYPE_FUNCTION = 'function';
@@ -143,14 +865,68 @@ function each(obj, iterator, context) {
 }
 
 /**
+ * wrap a method with a deprecation warning and stack trace
+ * @param {Function} method
+ * @param {String} name
+ * @param {String} message
+ * @returns {Function} A new function wrapping the supplied method.
+ */
+function deprecate(method, name, message) {
+    var deprecationMessage = 'DEPRECATED METHOD: ' + name + '\n' + message + ' AT \n';
+    return function() {
+        var e = new Error('get-stack-trace');
+        var stack = e && e.stack ? e.stack.replace(/^[^\(]+?[\n$]/gm, '')
+            .replace(/^\s+at\s+/gm, '')
+            .replace(/^Object.<anonymous>\s*\(/gm, '{anonymous}()@') : 'Unknown Stack Trace';
+
+        var log = window.console && (window.console.warn || window.console.log);
+        if (log) {
+            log.call(window.console, deprecationMessage, stack);
+        }
+        return method.apply(this, arguments);
+    };
+}
+
+/**
+ * extend object.
+ * means that properties in dest will be overwritten by the ones in src.
+ * @param {Object} target
+ * @param {...Object} objects_to_assign
+ * @returns {Object} target
+ */
+var assign;
+if (typeof Object.assign !== 'function') {
+    assign = function assign(target) {
+        if (target === undefined || target === null) {
+            throw new TypeError('Cannot convert undefined or null to object');
+        }
+
+        var output = Object(target);
+        for (var index = 1; index < arguments.length; index++) {
+            var source = arguments[index];
+            if (source !== undefined && source !== null) {
+                for (var nextKey in source) {
+                    if (source.hasOwnProperty(nextKey)) {
+                        output[nextKey] = source[nextKey];
+                    }
+                }
+            }
+        }
+        return output;
+    };
+} else {
+    assign = Object.assign;
+}
+
+/**
  * extend object.
  * means that properties in dest will be overwritten by the ones in src.
  * @param {Object} dest
  * @param {Object} src
- * @param {Boolean} [merge]
+ * @param {Boolean=false} [merge]
  * @returns {Object} dest
  */
-function extend(dest, src, merge) {
+var extend = deprecate(function extend(dest, src, merge) {
     var keys = Object.keys(src);
     var i = 0;
     while (i < keys.length) {
@@ -160,7 +936,7 @@ function extend(dest, src, merge) {
         i++;
     }
     return dest;
-}
+}, 'extend', 'Use `assign`.');
 
 /**
  * merge the values from src in the dest.
@@ -169,9 +945,9 @@ function extend(dest, src, merge) {
  * @param {Object} src
  * @returns {Object} dest
  */
-function merge(dest, src) {
+var merge = deprecate(function merge(dest, src) {
     return extend(dest, src, true);
-}
+}, 'merge', 'Use `assign`.');
 
 /**
  * simple class inheritance
@@ -188,7 +964,7 @@ function inherit(child, base, properties) {
     childP._super = baseP;
 
     if (properties) {
-        extend(childP, properties);
+        assign(childP, properties);
     }
 }
 
@@ -391,8 +1167,8 @@ function uniqueId() {
  * @returns {DocumentView|Window}
  */
 function getWindowForElement(element) {
-    var doc = element.ownerDocument;
-    return (doc.defaultView || doc.parentWindow);
+    var doc = element.ownerDocument || element;
+    return (doc.defaultView || doc.parentWindow || window);
 }
 
 var MOBILE_REGEX = /mobile|tablet|ip(ad|hone|od)|android/i;
@@ -571,8 +1347,16 @@ function computeInputData(manager, input) {
     computeDeltaXY(session, input);
     input.offsetDirection = getDirection(input.deltaX, input.deltaY);
 
+    var overallVelocity = getVelocity(input.deltaTime, input.deltaX, input.deltaY);
+    input.overallVelocityX = overallVelocity.x;
+    input.overallVelocityY = overallVelocity.y;
+    input.overallVelocity = (abs(overallVelocity.x) > abs(overallVelocity.y)) ? overallVelocity.x : overallVelocity.y;
+
     input.scale = firstMultiple ? getScale(firstMultiple.pointers, pointers) : 1;
     input.rotation = firstMultiple ? getRotation(firstMultiple.pointers, pointers) : 0;
+
+    input.maxPointers = !session.prevInput ? input.pointers.length : ((input.pointers.length >
+        session.prevInput.maxPointers) ? input.pointers.length : session.prevInput.maxPointers);
 
     computeIntervalInputData(session, input);
 
@@ -617,8 +1401,8 @@ function computeIntervalInputData(session, input) {
         velocity, velocityX, velocityY, direction;
 
     if (input.eventType != INPUT_CANCEL && (deltaTime > COMPUTE_INTERVAL || last.velocity === undefined)) {
-        var deltaX = last.deltaX - input.deltaX;
-        var deltaY = last.deltaY - input.deltaY;
+        var deltaX = input.deltaX - last.deltaX;
+        var deltaY = input.deltaY - last.deltaY;
 
         var v = getVelocity(deltaTime, deltaX, deltaY);
         velocityX = v.x;
@@ -723,9 +1507,9 @@ function getDirection(x, y) {
     }
 
     if (abs(x) >= abs(y)) {
-        return x > 0 ? DIRECTION_LEFT : DIRECTION_RIGHT;
+        return x < 0 ? DIRECTION_LEFT : DIRECTION_RIGHT;
     }
-    return y > 0 ? DIRECTION_UP : DIRECTION_DOWN;
+    return y < 0 ? DIRECTION_UP : DIRECTION_DOWN;
 }
 
 /**
@@ -768,7 +1552,7 @@ function getAngle(p1, p2, props) {
  * @return {Number} rotation
  */
 function getRotation(start, end) {
-    return getAngle(end[1], end[0], PROPS_CLIENT_XY) - getAngle(start[1], start[0], PROPS_CLIENT_XY);
+    return getAngle(end[1], end[0], PROPS_CLIENT_XY) + getAngle(start[1], start[0], PROPS_CLIENT_XY);
 }
 
 /**
@@ -861,7 +1645,7 @@ var POINTER_ELEMENT_EVENTS = 'pointerdown';
 var POINTER_WINDOW_EVENTS = 'pointermove pointerup pointercancel';
 
 // IE10 has prefixed support, and case-sensitive
-if (window.MSPointerEvent) {
+if (window.MSPointerEvent && !window.PointerEvent) {
     POINTER_ELEMENT_EVENTS = 'MSPointerDown';
     POINTER_WINDOW_EVENTS = 'MSPointerMove MSPointerUp MSPointerCancel';
 }
@@ -1185,7 +1969,7 @@ TouchAction.prototype = {
             value = this.compute();
         }
 
-        if (NATIVE_TOUCH_ACTION) {
+        if (NATIVE_TOUCH_ACTION && this.manager.element.style) {
             this.manager.element.style[PREFIXED_TOUCH_ACTION] = value;
         }
         this.actions = value.toLowerCase().trim();
@@ -1236,6 +2020,23 @@ TouchAction.prototype = {
         var hasPanY = inStr(actions, TOUCH_ACTION_PAN_Y);
         var hasPanX = inStr(actions, TOUCH_ACTION_PAN_X);
 
+        if (hasNone) {
+            //do not prevent defaults if this is a tap gesture
+
+            var isTapPointer = input.pointers.length === 1;
+            var isTapMovement = input.distance < 2;
+            var isTapTouchTime = input.deltaTime < 250;
+
+            if (isTapPointer && isTapMovement && isTapTouchTime) {
+                return;
+            }
+        }
+
+        if (hasPanX && hasPanY) {
+            // `pan-x pan-y` means browser handles all scrolling/panning, do not prevent
+            return;
+        }
+
         if (hasNone ||
             (hasPanY && direction & DIRECTION_HORIZONTAL) ||
             (hasPanX && direction & DIRECTION_VERTICAL)) {
@@ -1267,9 +2068,12 @@ function cleanTouchActions(actions) {
     var hasPanX = inStr(actions, TOUCH_ACTION_PAN_X);
     var hasPanY = inStr(actions, TOUCH_ACTION_PAN_Y);
 
-    // pan-x and pan-y can be combined
+    // if both pan-x and pan-y are set (different recognizers
+    // for different directions, e.g. horizontal pan but vertical swipe?)
+    // we need none (as otherwise with pan-x pan-y combined none of these
+    // recognizers will work, since the browser would handle all panning
     if (hasPanX && hasPanY) {
-        return TOUCH_ACTION_PAN_X + ' ' + TOUCH_ACTION_PAN_Y;
+        return TOUCH_ACTION_NONE;
     }
 
     // pan-x OR pan-y
@@ -1327,10 +2131,11 @@ var STATE_FAILED = 32;
  * @param {Object} options
  */
 function Recognizer(options) {
+    this.options = assign({}, this.defaults, options || {});
+
     this.id = uniqueId();
 
     this.manager = null;
-    this.options = merge(options || {}, this.defaults);
 
     // default is enable true
     this.options.enable = ifUndefined(this.options.enable, true);
@@ -1354,7 +2159,7 @@ Recognizer.prototype = {
      * @return {Recognizer}
      */
     set: function(options) {
-        extend(this.options, options);
+        assign(this.options, options);
 
         // also update the touchAction, in case something changed about the directions/enabled state
         this.manager && this.manager.touchAction.update();
@@ -1458,20 +2263,24 @@ Recognizer.prototype = {
         var self = this;
         var state = this.state;
 
-        function emit(withState) {
-            self.manager.emit(self.options.event + (withState ? stateStr(state) : ''), input);
+        function emit(event) {
+            self.manager.emit(event, input);
         }
 
         // 'panstart' and 'panmove'
         if (state < STATE_ENDED) {
-            emit(true);
+            emit(self.options.event + stateStr(state));
         }
 
-        emit(); // simple 'eventName' events
+        emit(self.options.event); // simple 'eventName' events
+
+        if (input.additionalEvent) { // additional event(panleft, panright, pinchin, pinchout...)
+            emit(input.additionalEvent);
+        }
 
         // panend and pancancel
         if (state >= STATE_ENDED) {
-            emit(true);
+            emit(self.options.event + stateStr(state));
         }
     },
 
@@ -1511,7 +2320,7 @@ Recognizer.prototype = {
     recognize: function(inputData) {
         // make a new copy of the inputData
         // so we can change the inputData without messing up the other recognizers
-        var inputDataClone = extend({}, inputData);
+        var inputDataClone = assign({}, inputData);
 
         // is is enabled and allow recognizing?
         if (!boolOrFn(this.options.enable, [this, inputDataClone])) {
@@ -1736,14 +2545,15 @@ inherit(PanRecognizer, AttrRecognizer, {
     },
 
     emit: function(input) {
+
         this.pX = input.deltaX;
         this.pY = input.deltaY;
 
         var direction = directionStr(input.direction);
-        if (direction) {
-            this.manager.emit(this.options.event + direction, input);
-        }
 
+        if (direction) {
+            input.additionalEvent = this.options.event + direction;
+        }
         this._super.emit.call(this, input);
     }
 });
@@ -1779,11 +2589,11 @@ inherit(PinchRecognizer, AttrRecognizer, {
     },
 
     emit: function(input) {
-        this._super.emit.call(this, input);
         if (input.scale !== 1) {
             var inOut = input.scale < 1 ? 'in' : 'out';
-            this.manager.emit(this.options.event + inOut, input);
+            input.additionalEvent = this.options.event + inOut;
         }
+        this._super.emit.call(this, input);
     }
 });
 
@@ -1808,8 +2618,8 @@ inherit(PressRecognizer, Recognizer, {
     defaults: {
         event: 'press',
         pointers: 1,
-        time: 500, // minimal time of the pointer to be pressed
-        threshold: 5 // a minimal movement is ok, but keep it low
+        time: 251, // minimal time of the pointer to be pressed
+        threshold: 9 // a minimal movement is ok, but keep it low
     },
 
     getTouchAction: function() {
@@ -1907,7 +2717,7 @@ inherit(SwipeRecognizer, AttrRecognizer, {
     defaults: {
         event: 'swipe',
         threshold: 10,
-        velocity: 0.65,
+        velocity: 0.3,
         direction: DIRECTION_HORIZONTAL | DIRECTION_VERTICAL,
         pointers: 1
     },
@@ -1921,21 +2731,22 @@ inherit(SwipeRecognizer, AttrRecognizer, {
         var velocity;
 
         if (direction & (DIRECTION_HORIZONTAL | DIRECTION_VERTICAL)) {
-            velocity = input.velocity;
+            velocity = input.overallVelocity;
         } else if (direction & DIRECTION_HORIZONTAL) {
-            velocity = input.velocityX;
+            velocity = input.overallVelocityX;
         } else if (direction & DIRECTION_VERTICAL) {
-            velocity = input.velocityY;
+            velocity = input.overallVelocityY;
         }
 
         return this._super.attrTest.call(this, input) &&
-            direction & input.direction &&
+            direction & input.offsetDirection &&
             input.distance > this.options.threshold &&
+            input.maxPointers == this.options.pointers &&
             abs(velocity) > this.options.velocity && input.eventType & INPUT_END;
     },
 
     emit: function(input) {
-        var direction = directionStr(input.direction);
+        var direction = directionStr(input.offsetDirection);
         if (direction) {
             this.manager.emit(this.options.event + direction, input);
         }
@@ -1978,7 +2789,7 @@ inherit(TapRecognizer, Recognizer, {
         taps: 1,
         interval: 300, // max time between the multi-tap taps
         time: 250, // max time of the pointer to be down (like finger on the screen)
-        threshold: 2, // a minimal movement is ok, but keep it low
+        threshold: 9, // a minimal movement is ok, but keep it low
         posThreshold: 10 // a multi-tap can be a bit off the initial position
     },
 
@@ -2052,7 +2863,7 @@ inherit(TapRecognizer, Recognizer, {
     },
 
     emit: function() {
-        if (this.state == STATE_RECOGNIZED ) {
+        if (this.state == STATE_RECOGNIZED) {
             this._input.tapCount = this.count;
             this.manager.emit(this.options.event, this._input);
         }
@@ -2060,7 +2871,7 @@ inherit(TapRecognizer, Recognizer, {
 });
 
 /**
- * Simple way to create an manager with a default set of recognizers.
+ * Simple way to create a manager with a default set of recognizers.
  * @param {HTMLElement} element
  * @param {Object} [options]
  * @constructor
@@ -2074,7 +2885,7 @@ function Hammer(element, options) {
 /**
  * @const {string}
  */
-Hammer.VERSION = '2.0.4';
+Hammer.VERSION = '2.0.6';
 
 /**
  * default settings
@@ -2126,12 +2937,12 @@ Hammer.defaults = {
      */
     preset: [
         // RecognizerClass, options, [recognizeWith, ...], [requireFailure, ...]
-        [RotateRecognizer, { enable: false }],
-        [PinchRecognizer, { enable: false }, ['rotate']],
-        [SwipeRecognizer,{ direction: DIRECTION_HORIZONTAL }],
-        [PanRecognizer, { direction: DIRECTION_HORIZONTAL }, ['swipe']],
+        [RotateRecognizer, {enable: false}],
+        [PinchRecognizer, {enable: false}, ['rotate']],
+        [SwipeRecognizer, {direction: DIRECTION_HORIZONTAL}],
+        [PanRecognizer, {direction: DIRECTION_HORIZONTAL}, ['swipe']],
         [TapRecognizer],
-        [TapRecognizer, { event: 'doubletap', taps: 2 }, ['tap']],
+        [TapRecognizer, {event: 'doubletap', taps: 2}, ['tap']],
         [PressRecognizer]
     ],
 
@@ -2198,9 +3009,8 @@ var FORCED_STOP = 2;
  * @constructor
  */
 function Manager(element, options) {
-    options = options || {};
+    this.options = assign({}, Hammer.defaults, options || {});
 
-    this.options = merge(options, Hammer.defaults);
     this.options.inputTarget = this.options.inputTarget || element;
 
     this.handlers = {};
@@ -2213,7 +3023,7 @@ function Manager(element, options) {
 
     toggleCssProps(this, true);
 
-    each(options.recognizers, function(item) {
+    each(this.options.recognizers, function(item) {
         var recognizer = this.add(new (item[0])(item[1]));
         item[2] && recognizer.recognizeWith(item[2]);
         item[3] && recognizer.requireFailure(item[3]);
@@ -2227,7 +3037,7 @@ Manager.prototype = {
      * @returns {Manager}
      */
     set: function(options) {
-        extend(this.options, options);
+        assign(this.options, options);
 
         // Options that need a little more setup
         if (options.touchAction) {
@@ -2361,11 +3171,19 @@ Manager.prototype = {
             return this;
         }
 
-        var recognizers = this.recognizers;
         recognizer = this.get(recognizer);
-        recognizers.splice(inArray(recognizers, recognizer), 1);
 
-        this.touchAction.update();
+        // let's make sure this recognizer exists
+        if (recognizer) {
+            var recognizers = this.recognizers;
+            var index = inArray(recognizers, recognizer);
+
+            if (index !== -1) {
+                recognizers.splice(index, 1);
+                this.touchAction.update();
+            }
+        }
+
         return this;
     },
 
@@ -2396,7 +3214,7 @@ Manager.prototype = {
             if (!handler) {
                 delete handlers[event];
             } else {
-                handlers[event].splice(inArray(handlers[event], handler), 1);
+                handlers[event] && handlers[event].splice(inArray(handlers[event], handler), 1);
             }
         });
         return this;
@@ -2452,6 +3270,9 @@ Manager.prototype = {
  */
 function toggleCssProps(manager, add) {
     var element = manager.element;
+    if (!element.style) {
+        return;
+    }
     each(manager.options.cssProps, function(value, name) {
         element.style[prefixed(element.style, name)] = add ? value : '';
     });
@@ -2469,7 +3290,7 @@ function triggerDomEvent(event, data) {
     data.target.dispatchEvent(gestureEvent);
 }
 
-extend(Hammer, {
+assign(Hammer, {
     INPUT_START: INPUT_START,
     INPUT_MOVE: INPUT_MOVE,
     INPUT_END: INPUT_END,
@@ -2516,12 +3337,18 @@ extend(Hammer, {
     each: each,
     merge: merge,
     extend: extend,
+    assign: assign,
     inherit: inherit,
     bindFn: bindFn,
     prefixed: prefixed
 });
 
-if (typeof define == TYPE_FUNCTION && define.amd) {
+// this prevents errors when Hammer is loaded in the presence of an AMD
+//  style loader but by script tag, not by the loader.
+var freeGlobal = (typeof window !== 'undefined' ? window : (typeof self !== 'undefined' ? self : {})); // jshint ignore:line
+freeGlobal.Hammer = Hammer;
+
+if (typeof define === 'function' && define.amd) {
     define(function() {
         return Hammer;
     });
@@ -2533,7 +3360,7 @@ if (typeof define == TYPE_FUNCTION && define.amd) {
 
 })(window, document, 'Hammer');
 
-},{}],3:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 /**
  * Gets the last element of `array`.
  *
@@ -2554,7 +3381,7 @@ function last(array) {
 
 module.exports = last;
 
-},{}],4:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 var baseCallback = require('../internal/baseCallback'),
     basePullAt = require('../internal/basePullAt');
 
@@ -2620,7 +3447,7 @@ function remove(array, predicate, thisArg) {
 
 module.exports = remove;
 
-},{"../internal/baseCallback":13,"../internal/basePullAt":29}],5:[function(require,module,exports){
+},{"../internal/baseCallback":17,"../internal/basePullAt":33}],9:[function(require,module,exports){
 var arrayFilter = require('../internal/arrayFilter'),
     baseCallback = require('../internal/baseCallback'),
     baseFilter = require('../internal/baseFilter'),
@@ -2683,7 +3510,7 @@ function filter(collection, predicate, thisArg) {
 
 module.exports = filter;
 
-},{"../internal/arrayFilter":9,"../internal/baseCallback":13,"../internal/baseFilter":16,"../lang/isArray":55}],6:[function(require,module,exports){
+},{"../internal/arrayFilter":13,"../internal/baseCallback":17,"../internal/baseFilter":20,"../lang/isArray":59}],10:[function(require,module,exports){
 var baseEach = require('../internal/baseEach'),
     createFind = require('../internal/createFind');
 
@@ -2741,7 +3568,7 @@ var find = createFind(baseEach);
 
 module.exports = find;
 
-},{"../internal/baseEach":15,"../internal/createFind":37}],7:[function(require,module,exports){
+},{"../internal/baseEach":19,"../internal/createFind":41}],11:[function(require,module,exports){
 var baseMatches = require('../internal/baseMatches'),
     filter = require('./filter');
 
@@ -2780,7 +3607,7 @@ function where(collection, source) {
 
 module.exports = where;
 
-},{"../internal/baseMatches":25,"./filter":5}],8:[function(require,module,exports){
+},{"../internal/baseMatches":29,"./filter":9}],12:[function(require,module,exports){
 /** Used as the `TypeError` message for "Functions" methods. */
 var FUNC_ERROR_TEXT = 'Expected a function';
 
@@ -2840,7 +3667,7 @@ function restParam(func, start) {
 
 module.exports = restParam;
 
-},{}],9:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 /**
  * A specialized version of `_.filter` for arrays without support for callback
  * shorthands and `this` binding.
@@ -2867,7 +3694,7 @@ function arrayFilter(array, predicate) {
 
 module.exports = arrayFilter;
 
-},{}],10:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 /**
  * A specialized version of `_.some` for arrays without support for callback
  * shorthands and `this` binding.
@@ -2892,7 +3719,7 @@ function arraySome(array, predicate) {
 
 module.exports = arraySome;
 
-},{}],11:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 var keys = require('../object/keys');
 
 /**
@@ -2926,7 +3753,7 @@ function assignWith(object, source, customizer) {
 
 module.exports = assignWith;
 
-},{"../object/keys":62}],12:[function(require,module,exports){
+},{"../object/keys":66}],16:[function(require,module,exports){
 var baseCopy = require('./baseCopy'),
     keys = require('../object/keys');
 
@@ -2947,7 +3774,7 @@ function baseAssign(object, source) {
 
 module.exports = baseAssign;
 
-},{"../object/keys":62,"./baseCopy":14}],13:[function(require,module,exports){
+},{"../object/keys":66,"./baseCopy":18}],17:[function(require,module,exports){
 var baseMatches = require('./baseMatches'),
     baseMatchesProperty = require('./baseMatchesProperty'),
     bindCallback = require('./bindCallback'),
@@ -2984,7 +3811,7 @@ function baseCallback(func, thisArg, argCount) {
 
 module.exports = baseCallback;
 
-},{"../utility/identity":65,"../utility/property":66,"./baseMatches":25,"./baseMatchesProperty":26,"./bindCallback":33}],14:[function(require,module,exports){
+},{"../utility/identity":69,"../utility/property":70,"./baseMatches":29,"./baseMatchesProperty":30,"./bindCallback":37}],18:[function(require,module,exports){
 /**
  * Copies properties of `source` to `object`.
  *
@@ -3009,7 +3836,7 @@ function baseCopy(source, props, object) {
 
 module.exports = baseCopy;
 
-},{}],15:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 var baseForOwn = require('./baseForOwn'),
     createBaseEach = require('./createBaseEach');
 
@@ -3026,7 +3853,7 @@ var baseEach = createBaseEach(baseForOwn);
 
 module.exports = baseEach;
 
-},{"./baseForOwn":20,"./createBaseEach":35}],16:[function(require,module,exports){
+},{"./baseForOwn":24,"./createBaseEach":39}],20:[function(require,module,exports){
 var baseEach = require('./baseEach');
 
 /**
@@ -3050,7 +3877,7 @@ function baseFilter(collection, predicate) {
 
 module.exports = baseFilter;
 
-},{"./baseEach":15}],17:[function(require,module,exports){
+},{"./baseEach":19}],21:[function(require,module,exports){
 /**
  * The base implementation of `_.find`, `_.findLast`, `_.findKey`, and `_.findLastKey`,
  * without support for callback shorthands and `this` binding, which iterates
@@ -3077,7 +3904,7 @@ function baseFind(collection, predicate, eachFunc, retKey) {
 
 module.exports = baseFind;
 
-},{}],18:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 /**
  * The base implementation of `_.findIndex` and `_.findLastIndex` without
  * support for callback shorthands and `this` binding.
@@ -3102,7 +3929,7 @@ function baseFindIndex(array, predicate, fromRight) {
 
 module.exports = baseFindIndex;
 
-},{}],19:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 var createBaseFor = require('./createBaseFor');
 
 /**
@@ -3121,7 +3948,7 @@ var baseFor = createBaseFor();
 
 module.exports = baseFor;
 
-},{"./createBaseFor":36}],20:[function(require,module,exports){
+},{"./createBaseFor":40}],24:[function(require,module,exports){
 var baseFor = require('./baseFor'),
     keys = require('../object/keys');
 
@@ -3140,7 +3967,7 @@ function baseForOwn(object, iteratee) {
 
 module.exports = baseForOwn;
 
-},{"../object/keys":62,"./baseFor":19}],21:[function(require,module,exports){
+},{"../object/keys":66,"./baseFor":23}],25:[function(require,module,exports){
 var toObject = require('./toObject');
 
 /**
@@ -3171,7 +3998,7 @@ function baseGet(object, path, pathKey) {
 
 module.exports = baseGet;
 
-},{"./toObject":52}],22:[function(require,module,exports){
+},{"./toObject":56}],26:[function(require,module,exports){
 var baseIsEqualDeep = require('./baseIsEqualDeep'),
     isObject = require('../lang/isObject'),
     isObjectLike = require('./isObjectLike');
@@ -3201,7 +4028,7 @@ function baseIsEqual(value, other, customizer, isLoose, stackA, stackB) {
 
 module.exports = baseIsEqual;
 
-},{"../lang/isObject":58,"./baseIsEqualDeep":23,"./isObjectLike":49}],23:[function(require,module,exports){
+},{"../lang/isObject":62,"./baseIsEqualDeep":27,"./isObjectLike":53}],27:[function(require,module,exports){
 var equalArrays = require('./equalArrays'),
     equalByTag = require('./equalByTag'),
     equalObjects = require('./equalObjects'),
@@ -3305,7 +4132,7 @@ function baseIsEqualDeep(object, other, equalFunc, customizer, isLoose, stackA, 
 
 module.exports = baseIsEqualDeep;
 
-},{"../lang/isArray":55,"../lang/isTypedArray":59,"./equalArrays":38,"./equalByTag":39,"./equalObjects":40}],24:[function(require,module,exports){
+},{"../lang/isArray":59,"../lang/isTypedArray":63,"./equalArrays":42,"./equalByTag":43,"./equalObjects":44}],28:[function(require,module,exports){
 var baseIsEqual = require('./baseIsEqual'),
     toObject = require('./toObject');
 
@@ -3359,7 +4186,7 @@ function baseIsMatch(object, matchData, customizer) {
 
 module.exports = baseIsMatch;
 
-},{"./baseIsEqual":22,"./toObject":52}],25:[function(require,module,exports){
+},{"./baseIsEqual":26,"./toObject":56}],29:[function(require,module,exports){
 var baseIsMatch = require('./baseIsMatch'),
     getMatchData = require('./getMatchData'),
     toObject = require('./toObject');
@@ -3391,7 +4218,7 @@ function baseMatches(source) {
 
 module.exports = baseMatches;
 
-},{"./baseIsMatch":24,"./getMatchData":42,"./toObject":52}],26:[function(require,module,exports){
+},{"./baseIsMatch":28,"./getMatchData":46,"./toObject":56}],30:[function(require,module,exports){
 var baseGet = require('./baseGet'),
     baseIsEqual = require('./baseIsEqual'),
     baseSlice = require('./baseSlice'),
@@ -3438,7 +4265,7 @@ function baseMatchesProperty(path, srcValue) {
 
 module.exports = baseMatchesProperty;
 
-},{"../array/last":3,"../lang/isArray":55,"./baseGet":21,"./baseIsEqual":22,"./baseSlice":31,"./isKey":47,"./isStrictComparable":50,"./toObject":52,"./toPath":53}],27:[function(require,module,exports){
+},{"../array/last":7,"../lang/isArray":59,"./baseGet":25,"./baseIsEqual":26,"./baseSlice":35,"./isKey":51,"./isStrictComparable":54,"./toObject":56,"./toPath":57}],31:[function(require,module,exports){
 /**
  * The base implementation of `_.property` without support for deep paths.
  *
@@ -3454,7 +4281,7 @@ function baseProperty(key) {
 
 module.exports = baseProperty;
 
-},{}],28:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 var baseGet = require('./baseGet'),
     toPath = require('./toPath');
 
@@ -3475,7 +4302,7 @@ function basePropertyDeep(path) {
 
 module.exports = basePropertyDeep;
 
-},{"./baseGet":21,"./toPath":53}],29:[function(require,module,exports){
+},{"./baseGet":25,"./toPath":57}],33:[function(require,module,exports){
 var isIndex = require('./isIndex');
 
 /** Used for native method references. */
@@ -3507,7 +4334,7 @@ function basePullAt(array, indexes) {
 
 module.exports = basePullAt;
 
-},{"./isIndex":45}],30:[function(require,module,exports){
+},{"./isIndex":49}],34:[function(require,module,exports){
 /* Native method references for those with the same name as other `lodash` methods. */
 var nativeFloor = Math.floor,
     nativeRandom = Math.random;
@@ -3527,7 +4354,7 @@ function baseRandom(min, max) {
 
 module.exports = baseRandom;
 
-},{}],31:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 /**
  * The base implementation of `_.slice` without an iteratee call guard.
  *
@@ -3561,7 +4388,7 @@ function baseSlice(array, start, end) {
 
 module.exports = baseSlice;
 
-},{}],32:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 /**
  * Converts `value` to a string if it's not one. An empty string is returned
  * for `null` or `undefined` values.
@@ -3576,7 +4403,7 @@ function baseToString(value) {
 
 module.exports = baseToString;
 
-},{}],33:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 var identity = require('../utility/identity');
 
 /**
@@ -3617,7 +4444,7 @@ function bindCallback(func, thisArg, argCount) {
 
 module.exports = bindCallback;
 
-},{"../utility/identity":65}],34:[function(require,module,exports){
+},{"../utility/identity":69}],38:[function(require,module,exports){
 var bindCallback = require('./bindCallback'),
     isIterateeCall = require('./isIterateeCall'),
     restParam = require('../function/restParam');
@@ -3660,7 +4487,7 @@ function createAssigner(assigner) {
 
 module.exports = createAssigner;
 
-},{"../function/restParam":8,"./bindCallback":33,"./isIterateeCall":46}],35:[function(require,module,exports){
+},{"../function/restParam":12,"./bindCallback":37,"./isIterateeCall":50}],39:[function(require,module,exports){
 var getLength = require('./getLength'),
     isLength = require('./isLength'),
     toObject = require('./toObject');
@@ -3693,7 +4520,7 @@ function createBaseEach(eachFunc, fromRight) {
 
 module.exports = createBaseEach;
 
-},{"./getLength":41,"./isLength":48,"./toObject":52}],36:[function(require,module,exports){
+},{"./getLength":45,"./isLength":52,"./toObject":56}],40:[function(require,module,exports){
 var toObject = require('./toObject');
 
 /**
@@ -3722,7 +4549,7 @@ function createBaseFor(fromRight) {
 
 module.exports = createBaseFor;
 
-},{"./toObject":52}],37:[function(require,module,exports){
+},{"./toObject":56}],41:[function(require,module,exports){
 var baseCallback = require('./baseCallback'),
     baseFind = require('./baseFind'),
     baseFindIndex = require('./baseFindIndex'),
@@ -3749,7 +4576,7 @@ function createFind(eachFunc, fromRight) {
 
 module.exports = createFind;
 
-},{"../lang/isArray":55,"./baseCallback":13,"./baseFind":17,"./baseFindIndex":18}],38:[function(require,module,exports){
+},{"../lang/isArray":59,"./baseCallback":17,"./baseFind":21,"./baseFindIndex":22}],42:[function(require,module,exports){
 var arraySome = require('./arraySome');
 
 /**
@@ -3802,7 +4629,7 @@ function equalArrays(array, other, equalFunc, customizer, isLoose, stackA, stack
 
 module.exports = equalArrays;
 
-},{"./arraySome":10}],39:[function(require,module,exports){
+},{"./arraySome":14}],43:[function(require,module,exports){
 /** `Object#toString` result references. */
 var boolTag = '[object Boolean]',
     dateTag = '[object Date]',
@@ -3852,7 +4679,7 @@ function equalByTag(object, other, tag) {
 
 module.exports = equalByTag;
 
-},{}],40:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 var keys = require('../object/keys');
 
 /** Used for native method references. */
@@ -3921,7 +4748,7 @@ function equalObjects(object, other, equalFunc, customizer, isLoose, stackA, sta
 
 module.exports = equalObjects;
 
-},{"../object/keys":62}],41:[function(require,module,exports){
+},{"../object/keys":66}],45:[function(require,module,exports){
 var baseProperty = require('./baseProperty');
 
 /**
@@ -3938,7 +4765,7 @@ var getLength = baseProperty('length');
 
 module.exports = getLength;
 
-},{"./baseProperty":27}],42:[function(require,module,exports){
+},{"./baseProperty":31}],46:[function(require,module,exports){
 var isStrictComparable = require('./isStrictComparable'),
     pairs = require('../object/pairs');
 
@@ -3961,7 +4788,7 @@ function getMatchData(object) {
 
 module.exports = getMatchData;
 
-},{"../object/pairs":64,"./isStrictComparable":50}],43:[function(require,module,exports){
+},{"../object/pairs":68,"./isStrictComparable":54}],47:[function(require,module,exports){
 var isNative = require('../lang/isNative');
 
 /**
@@ -3979,7 +4806,7 @@ function getNative(object, key) {
 
 module.exports = getNative;
 
-},{"../lang/isNative":57}],44:[function(require,module,exports){
+},{"../lang/isNative":61}],48:[function(require,module,exports){
 var getLength = require('./getLength'),
     isLength = require('./isLength');
 
@@ -3996,7 +4823,7 @@ function isArrayLike(value) {
 
 module.exports = isArrayLike;
 
-},{"./getLength":41,"./isLength":48}],45:[function(require,module,exports){
+},{"./getLength":45,"./isLength":52}],49:[function(require,module,exports){
 /** Used to detect unsigned integer values. */
 var reIsUint = /^\d+$/;
 
@@ -4022,7 +4849,7 @@ function isIndex(value, length) {
 
 module.exports = isIndex;
 
-},{}],46:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 var isArrayLike = require('./isArrayLike'),
     isIndex = require('./isIndex'),
     isObject = require('../lang/isObject');
@@ -4052,7 +4879,7 @@ function isIterateeCall(value, index, object) {
 
 module.exports = isIterateeCall;
 
-},{"../lang/isObject":58,"./isArrayLike":44,"./isIndex":45}],47:[function(require,module,exports){
+},{"../lang/isObject":62,"./isArrayLike":48,"./isIndex":49}],51:[function(require,module,exports){
 var isArray = require('../lang/isArray'),
     toObject = require('./toObject');
 
@@ -4082,7 +4909,7 @@ function isKey(value, object) {
 
 module.exports = isKey;
 
-},{"../lang/isArray":55,"./toObject":52}],48:[function(require,module,exports){
+},{"../lang/isArray":59,"./toObject":56}],52:[function(require,module,exports){
 /**
  * Used as the [maximum length](http://ecma-international.org/ecma-262/6.0/#sec-number.max_safe_integer)
  * of an array-like value.
@@ -4104,7 +4931,7 @@ function isLength(value) {
 
 module.exports = isLength;
 
-},{}],49:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 /**
  * Checks if `value` is object-like.
  *
@@ -4118,7 +4945,7 @@ function isObjectLike(value) {
 
 module.exports = isObjectLike;
 
-},{}],50:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 var isObject = require('../lang/isObject');
 
 /**
@@ -4135,7 +4962,7 @@ function isStrictComparable(value) {
 
 module.exports = isStrictComparable;
 
-},{"../lang/isObject":58}],51:[function(require,module,exports){
+},{"../lang/isObject":62}],55:[function(require,module,exports){
 var isArguments = require('../lang/isArguments'),
     isArray = require('../lang/isArray'),
     isIndex = require('./isIndex'),
@@ -4178,7 +5005,7 @@ function shimKeys(object) {
 
 module.exports = shimKeys;
 
-},{"../lang/isArguments":54,"../lang/isArray":55,"../object/keysIn":63,"./isIndex":45,"./isLength":48}],52:[function(require,module,exports){
+},{"../lang/isArguments":58,"../lang/isArray":59,"../object/keysIn":67,"./isIndex":49,"./isLength":52}],56:[function(require,module,exports){
 var isObject = require('../lang/isObject');
 
 /**
@@ -4194,7 +5021,7 @@ function toObject(value) {
 
 module.exports = toObject;
 
-},{"../lang/isObject":58}],53:[function(require,module,exports){
+},{"../lang/isObject":62}],57:[function(require,module,exports){
 var baseToString = require('./baseToString'),
     isArray = require('../lang/isArray');
 
@@ -4224,7 +5051,7 @@ function toPath(value) {
 
 module.exports = toPath;
 
-},{"../lang/isArray":55,"./baseToString":32}],54:[function(require,module,exports){
+},{"../lang/isArray":59,"./baseToString":36}],58:[function(require,module,exports){
 var isArrayLike = require('../internal/isArrayLike'),
     isObjectLike = require('../internal/isObjectLike');
 
@@ -4260,7 +5087,7 @@ function isArguments(value) {
 
 module.exports = isArguments;
 
-},{"../internal/isArrayLike":44,"../internal/isObjectLike":49}],55:[function(require,module,exports){
+},{"../internal/isArrayLike":48,"../internal/isObjectLike":53}],59:[function(require,module,exports){
 var getNative = require('../internal/getNative'),
     isLength = require('../internal/isLength'),
     isObjectLike = require('../internal/isObjectLike');
@@ -4302,7 +5129,7 @@ var isArray = nativeIsArray || function(value) {
 
 module.exports = isArray;
 
-},{"../internal/getNative":43,"../internal/isLength":48,"../internal/isObjectLike":49}],56:[function(require,module,exports){
+},{"../internal/getNative":47,"../internal/isLength":52,"../internal/isObjectLike":53}],60:[function(require,module,exports){
 var isObject = require('./isObject');
 
 /** `Object#toString` result references. */
@@ -4342,7 +5169,7 @@ function isFunction(value) {
 
 module.exports = isFunction;
 
-},{"./isObject":58}],57:[function(require,module,exports){
+},{"./isObject":62}],61:[function(require,module,exports){
 var isFunction = require('./isFunction'),
     isObjectLike = require('../internal/isObjectLike');
 
@@ -4392,7 +5219,7 @@ function isNative(value) {
 
 module.exports = isNative;
 
-},{"../internal/isObjectLike":49,"./isFunction":56}],58:[function(require,module,exports){
+},{"../internal/isObjectLike":53,"./isFunction":60}],62:[function(require,module,exports){
 /**
  * Checks if `value` is the [language type](https://es5.github.io/#x8) of `Object`.
  * (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
@@ -4422,7 +5249,7 @@ function isObject(value) {
 
 module.exports = isObject;
 
-},{}],59:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 var isLength = require('../internal/isLength'),
     isObjectLike = require('../internal/isObjectLike');
 
@@ -4498,7 +5325,7 @@ function isTypedArray(value) {
 
 module.exports = isTypedArray;
 
-},{"../internal/isLength":48,"../internal/isObjectLike":49}],60:[function(require,module,exports){
+},{"../internal/isLength":52,"../internal/isObjectLike":53}],64:[function(require,module,exports){
 var baseRandom = require('../internal/baseRandom'),
     isIterateeCall = require('../internal/isIterateeCall');
 
@@ -4570,7 +5397,7 @@ function random(min, max, floating) {
 
 module.exports = random;
 
-},{"../internal/baseRandom":30,"../internal/isIterateeCall":46}],61:[function(require,module,exports){
+},{"../internal/baseRandom":34,"../internal/isIterateeCall":50}],65:[function(require,module,exports){
 var assignWith = require('../internal/assignWith'),
     baseAssign = require('../internal/baseAssign'),
     createAssigner = require('../internal/createAssigner');
@@ -4615,7 +5442,7 @@ var assign = createAssigner(function(object, source, customizer) {
 
 module.exports = assign;
 
-},{"../internal/assignWith":11,"../internal/baseAssign":12,"../internal/createAssigner":34}],62:[function(require,module,exports){
+},{"../internal/assignWith":15,"../internal/baseAssign":16,"../internal/createAssigner":38}],66:[function(require,module,exports){
 var getNative = require('../internal/getNative'),
     isArrayLike = require('../internal/isArrayLike'),
     isObject = require('../lang/isObject'),
@@ -4662,7 +5489,7 @@ var keys = !nativeKeys ? shimKeys : function(object) {
 
 module.exports = keys;
 
-},{"../internal/getNative":43,"../internal/isArrayLike":44,"../internal/shimKeys":51,"../lang/isObject":58}],63:[function(require,module,exports){
+},{"../internal/getNative":47,"../internal/isArrayLike":48,"../internal/shimKeys":55,"../lang/isObject":62}],67:[function(require,module,exports){
 var isArguments = require('../lang/isArguments'),
     isArray = require('../lang/isArray'),
     isIndex = require('../internal/isIndex'),
@@ -4728,7 +5555,7 @@ function keysIn(object) {
 
 module.exports = keysIn;
 
-},{"../internal/isIndex":45,"../internal/isLength":48,"../lang/isArguments":54,"../lang/isArray":55,"../lang/isObject":58}],64:[function(require,module,exports){
+},{"../internal/isIndex":49,"../internal/isLength":52,"../lang/isArguments":58,"../lang/isArray":59,"../lang/isObject":62}],68:[function(require,module,exports){
 var keys = require('./keys'),
     toObject = require('../internal/toObject');
 
@@ -4763,7 +5590,7 @@ function pairs(object) {
 
 module.exports = pairs;
 
-},{"../internal/toObject":52,"./keys":62}],65:[function(require,module,exports){
+},{"../internal/toObject":56,"./keys":66}],69:[function(require,module,exports){
 /**
  * This method returns the first argument provided to it.
  *
@@ -4785,7 +5612,7 @@ function identity(value) {
 
 module.exports = identity;
 
-},{}],66:[function(require,module,exports){
+},{}],70:[function(require,module,exports){
 var baseProperty = require('../internal/baseProperty'),
     basePropertyDeep = require('../internal/basePropertyDeep'),
     isKey = require('../internal/isKey');
@@ -4818,43 +5645,7 @@ function property(path) {
 
 module.exports = property;
 
-},{"../internal/baseProperty":27,"../internal/basePropertyDeep":28,"../internal/isKey":47}],67:[function(require,module,exports){
-(function (process){
-// Generated by CoffeeScript 1.7.1
-(function() {
-  var getNanoSeconds, hrtime, loadTime;
-
-  if ((typeof performance !== "undefined" && performance !== null) && performance.now) {
-    module.exports = function() {
-      return performance.now();
-    };
-  } else if ((typeof process !== "undefined" && process !== null) && process.hrtime) {
-    module.exports = function() {
-      return (getNanoSeconds() - loadTime) / 1e6;
-    };
-    hrtime = process.hrtime;
-    getNanoSeconds = function() {
-      var hr;
-      hr = hrtime();
-      return hr[0] * 1e9 + hr[1];
-    };
-    loadTime = getNanoSeconds();
-  } else if (Date.now) {
-    module.exports = function() {
-      return Date.now() - loadTime;
-    };
-    loadTime = Date.now();
-  } else {
-    module.exports = function() {
-      return new Date().getTime() - loadTime;
-    };
-    loadTime = new Date().getTime();
-  }
-
-}).call(this);
-
-}).call(this,require("7YKIPe"))
-},{"7YKIPe":1}],68:[function(require,module,exports){
+},{"../internal/baseProperty":31,"../internal/basePropertyDeep":32,"../internal/isKey":51}],71:[function(require,module,exports){
 var now = require('performance-now')
   , global = typeof window === 'undefined' ? {} : window
   , vendors = ['moz', 'webkit']
@@ -4924,7 +5715,43 @@ module.exports.cancel = function() {
   caf.apply(global, arguments)
 }
 
-},{"performance-now":67}],69:[function(require,module,exports){
+},{"performance-now":72}],72:[function(require,module,exports){
+(function (process){
+// Generated by CoffeeScript 1.7.1
+(function() {
+  var getNanoSeconds, hrtime, loadTime;
+
+  if ((typeof performance !== "undefined" && performance !== null) && performance.now) {
+    module.exports = function() {
+      return performance.now();
+    };
+  } else if ((typeof process !== "undefined" && process !== null) && process.hrtime) {
+    module.exports = function() {
+      return (getNanoSeconds() - loadTime) / 1e6;
+    };
+    hrtime = process.hrtime;
+    getNanoSeconds = function() {
+      var hr;
+      hr = hrtime();
+      return hr[0] * 1e9 + hr[1];
+    };
+    loadTime = getNanoSeconds();
+  } else if (Date.now) {
+    module.exports = function() {
+      return Date.now() - loadTime;
+    };
+    loadTime = Date.now();
+  } else {
+    module.exports = function() {
+      return new Date().getTime() - loadTime;
+    };
+    loadTime = new Date().getTime();
+  }
+
+}).call(this);
+
+}).call(this,require("1YiZ5S"))
+},{"1YiZ5S":1}],73:[function(require,module,exports){
 (function (process){
 // Rebound
 // =======
@@ -6079,8 +6906,8 @@ module.exports.cancel = function() {
  *  of patent rights can be found in the PATENTS file in the same directory.
  */
 
-}).call(this,require("7YKIPe"))
-},{"7YKIPe":1}],70:[function(require,module,exports){
+}).call(this,require("1YiZ5S"))
+},{"1YiZ5S":1}],74:[function(require,module,exports){
 (function (global){
 /**
 * @link https://github.com/gajus/sister for the canonical source repository
@@ -6143,729 +6970,7 @@ global.gajus.Sister = Sister;
 
 module.exports = Sister;
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],71:[function(require,module,exports){
-(function (global){
-'use strict';
-
-Object.defineProperty(exports, '__esModule', {
-    value: true
-});
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-
-var _sister = require('sister');
-
-var _sister2 = _interopRequireDefault(_sister);
-
-var _hammerjs = require('hammerjs');
-
-var _hammerjs2 = _interopRequireDefault(_hammerjs);
-
-var _rebound = require('rebound');
-
-var _rebound2 = _interopRequireDefault(_rebound);
-
-var _vendorPrefix = require('vendor-prefix');
-
-var _vendorPrefix2 = _interopRequireDefault(_vendorPrefix);
-
-var _utilJs = require('./util.js');
-
-var _utilJs2 = _interopRequireDefault(_utilJs);
-
-var _raf = require('raf');
-
-var _raf2 = _interopRequireDefault(_raf);
-
-var Card = undefined;
-
-/**
- * @param {Stack} stack
- * @param {HTMLElement} targetElement
- * @return {Object} An instance of Card.
- */
-Card = function (stack, targetElement) {
-    var card = undefined,
-        config = undefined,
-        construct = undefined,
-        currentX = undefined,
-        currentY = undefined,
-        doMove = undefined,
-        eventEmitter = undefined,
-        isDraging = undefined,
-        lastThrow = undefined,
-        lastTranslate = undefined,
-        lastX = undefined,
-        lastY = undefined,
-        mc = undefined,
-        _onSpringUpdate = undefined,
-        springSystem = undefined,
-        springThrowIn = undefined,
-        springThrowOut = undefined,
-        throwOutDistance = undefined,
-        throwWhere = undefined;
-
-    construct = function () {
-        card = {};
-        config = Card.makeConfig(stack.getConfig());
-        eventEmitter = (0, _sister2['default'])();
-        springSystem = stack.getSpringSystem();
-        springThrowIn = springSystem.createSpring(250, 10);
-        springThrowOut = springSystem.createSpring(500, 20);
-        lastThrow = {};
-        lastTranslate = {
-            x: 0,
-            y: 0
-        };
-
-        springThrowIn.setRestSpeedThreshold(0.05);
-        springThrowIn.setRestDisplacementThreshold(0.05);
-
-        springThrowOut.setRestSpeedThreshold(0.05);
-        springThrowOut.setRestDisplacementThreshold(0.05);
-
-        throwOutDistance = config.throwOutDistance(config.minThrowOutDistance, config.maxThrowOutDistance);
-
-        mc = new _hammerjs2['default'].Manager(targetElement, {
-            recognizers: [[_hammerjs2['default'].Pan, {
-                threshold: 2
-            }]]
-        });
-
-        Card.appendToParent(targetElement);
-
-        eventEmitter.on('panstart', function () {
-            Card.appendToParent(targetElement);
-
-            eventEmitter.trigger('dragstart', {
-                target: targetElement
-            });
-
-            currentX = 0;
-            currentY = 0;
-
-            isDraging = true;
-
-            (function animation() {
-                if (isDraging) {
-                    doMove();
-
-                    (0, _raf2['default'])(animation);
-                }
-            })();
-        });
-
-        eventEmitter.on('panmove', function (e) {
-            currentX = e.deltaX;
-            currentY = e.deltaY;
-        });
-
-        eventEmitter.on('panend', function (e) {
-            var x = undefined,
-                y = undefined;
-
-            isDraging = false;
-
-            x = lastTranslate.x + e.deltaX;
-            y = lastTranslate.y + e.deltaY;
-
-            if (config.isThrowOut(x, targetElement, config.throwOutConfidence(x, targetElement))) {
-                card.throwOut(x, y);
-            } else {
-                card.throwIn(x, y);
-            }
-
-            eventEmitter.trigger('dragend', {
-                target: targetElement
-            });
-        });
-
-        // "mousedown" event fires late on touch enabled devices, thus listening
-        // to the touchstart event for touch enabled devices and mousedown otherwise.
-        if (_utilJs2['default'].isTouchDevice()) {
-            targetElement.addEventListener('touchstart', function () {
-                eventEmitter.trigger('panstart');
-            });
-
-            // Disable scrolling while dragging the element on the touch enabled devices.
-            // @see http://stackoverflow.com/a/12090055/368691
-            (function () {
-                var dragging = undefined;
-
-                targetElement.addEventListener('touchstart', function () {
-                    dragging = true;
-                });
-
-                targetElement.addEventListener('touchend', function () {
-                    dragging = false;
-                });
-
-                global.addEventListener('touchmove', function (e) {
-                    if (dragging) {
-                        e.preventDefault();
-                    }
-                });
-            })();
-        } else {
-            targetElement.addEventListener('mousedown', function () {
-                eventEmitter.trigger('panstart');
-            });
-        }
-
-        mc.on('panmove', function (e) {
-            eventEmitter.trigger('panmove', e);
-        });
-
-        mc.on('panend', function (e) {
-            eventEmitter.trigger('panend', e);
-        });
-
-        springThrowIn.addListener({
-            onSpringUpdate: function onSpringUpdate(spring) {
-                var value = undefined,
-                    x = undefined,
-                    y = undefined;
-
-                value = spring.getCurrentValue();
-                x = _rebound2['default'].MathUtil.mapValueInRange(value, 0, 1, lastThrow.fromX, 0);
-                y = _rebound2['default'].MathUtil.mapValueInRange(value, 0, 1, lastThrow.fromY, 0);
-
-                _onSpringUpdate(x, y);
-            },
-            onSpringAtRest: function onSpringAtRest() {
-                eventEmitter.trigger('throwinend', {
-                    target: targetElement
-                });
-            }
-        });
-
-        springThrowOut.addListener({
-            onSpringUpdate: function onSpringUpdate(spring) {
-                var value = undefined,
-                    x = undefined,
-                    y = undefined;
-
-                value = spring.getCurrentValue();
-                x = _rebound2['default'].MathUtil.mapValueInRange(value, 0, 1, lastThrow.fromX, throwOutDistance * lastThrow.direction);
-                y = lastThrow.fromY;
-
-                _onSpringUpdate(x, y);
-            },
-            onSpringAtRest: function onSpringAtRest() {
-                eventEmitter.trigger('throwoutend', {
-                    target: targetElement
-                });
-            }
-        });
-
-        /**
-         * Transforms card position based on the current environment variables.
-         *
-         * @return {undefined}
-         */
-        doMove = function () {
-            var r = undefined,
-                x = undefined,
-                y = undefined;
-
-            if (currentX === lastX && currentY === lastY) {
-                return;
-            }
-
-            lastX = currentX;
-            lastY = currentY;
-
-            x = lastTranslate.x + currentX;
-            y = lastTranslate.y + currentY;
-            r = config.rotation(x, y, targetElement, config.maxRotation);
-
-            config.transform(targetElement, x, y, r);
-
-            eventEmitter.trigger('dragmove', {
-                target: targetElement,
-                throwOutConfidence: config.throwOutConfidence(x, targetElement),
-                throwDirection: x < 0 ? Card.DIRECTION_LEFT : Card.DIRECTION_RIGHT
-            });
-        };
-
-        /**
-         * Invoked every time the physics solver updates the Spring's value.
-         *
-         * @param {Number} x
-         * @param {Number} y
-         * @return {undefined}
-         */
-        _onSpringUpdate = function (x, y) {
-            var r = undefined;
-
-            r = config.rotation(x, y, targetElement, config.maxRotation);
-
-            lastTranslate.x = x || 0;
-            lastTranslate.y = y || 0;
-
-            Card.transform(targetElement, x, y, r);
-        };
-
-        /**
-         * @param {Card.THROW_IN|Card.THROW_OUT} where
-         * @param {Number} fromX
-         * @param {Number} fromY
-         * @return {undefined}
-         */
-        throwWhere = function (where, fromX, fromY) {
-            lastThrow.fromX = fromX;
-            lastThrow.fromY = fromY;
-            lastThrow.direction = lastThrow.fromX < 0 ? Card.DIRECTION_LEFT : Card.DIRECTION_RIGHT;
-
-            if (where === Card.THROW_IN) {
-                springThrowIn.setCurrentValue(0).setAtRest().setEndValue(1);
-
-                eventEmitter.trigger('throwin', {
-                    target: targetElement,
-                    throwDirection: lastThrow.direction
-                });
-            } else if (where === Card.THROW_OUT) {
-                springThrowOut.setCurrentValue(0).setAtRest().setVelocity(100).setEndValue(1);
-
-                eventEmitter.trigger('throwout', {
-                    target: targetElement,
-                    throwDirection: lastThrow.direction
-                });
-
-                if (lastThrow.direction === Card.DIRECTION_LEFT) {
-                    eventEmitter.trigger('throwoutleft', {
-                        target: targetElement,
-                        throwDirection: lastThrow.direction
-                    });
-                } else {
-                    eventEmitter.trigger('throwoutright', {
-                        target: targetElement,
-                        throwDirection: lastThrow.direction
-                    });
-                }
-            } else {
-                throw new Error('Invalid throw event.');
-            }
-        };
-    };
-
-    construct();
-
-    /**
-     * Alias
-     */
-    card.on = eventEmitter.on;
-    card.trigger = eventEmitter.trigger;
-
-    /**
-     * Throws a card into the stack from an arbitrary position.
-     *
-     * @param {Number} fromX
-     * @param {Number} fromY
-     * @return {undefined}
-     */
-    card.throwIn = function (fromX, fromY) {
-        throwWhere(Card.THROW_IN, fromX, fromY);
-    };
-
-    /**
-     * Throws a card out of the stack in the direction away from the original offset.
-     *
-     * @param {Number} fromX
-     * @param {Number} fromY
-     * @return {undefined}
-     */
-    card.throwOut = function (fromX, fromY) {
-        throwWhere(Card.THROW_OUT, fromX, fromY);
-    };
-
-    /**
-     * Unbinds all Hammer.Manager events.
-     * Removes the listeners from the physics simulation.
-     *
-     * @return {undefined}
-     */
-    card.destroy = function () {
-        mc.destroy();
-        springThrowIn.destroy();
-        springThrowOut.destroy();
-
-        stack.destroyCard(card);
-    };
-
-    return card;
-};
-
-/**
- * Creates a configuration object.
- *
- * @param {Object} config
- * @return {Object}
- */
-Card.makeConfig = function () {
-    var config = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-
-    var defaultConfig = undefined;
-
-    defaultConfig = {
-        isThrowOut: Card.isThrowOut,
-        throwOutConfidence: Card.throwOutConfidence,
-        throwOutDistance: Card.throwOutDistance,
-        minThrowOutDistance: 400,
-        maxThrowOutDistance: 500,
-        rotation: Card.rotation,
-        maxRotation: 20,
-        transform: Card.transform
-    };
-
-    return _utilJs2['default'].assign({}, defaultConfig, config);
-};
-
-/**
- * Uses CSS transform to translate element position and rotation.
- *
- * Invoked in the event of `dragmove` and every time the physics solver is triggered.
- *
- * @param {HTMLElement} element
- * @param {Number} x Horizontal offset from the startDrag.
- * @param {Number} y Vertical offset from the startDrag.
- * @param {Number} r
- * @return {undefined}
- */
-Card.transform = function (element, x, y, r) {
-    element.style[(0, _vendorPrefix2['default'])('transform')] = 'translate3d(0, 0, 0) translate(' + x + 'px, ' + y + 'px) rotate(' + r + 'deg)';
-};
-
-/**
- * Append element to the parentNode.
- *
- * This makes the element first among the siblings. The reason for using
- * this as opposed to zIndex is to allow CSS selector :nth-child.
- *
- * Invoked in the event of mousedown.
- * Invoked when card is added to the stack.
- *
- * @param {HTMLElement} element The target element.
- * @return {undefined}
- */
-Card.appendToParent = function (element) {
-    var parentNode = undefined,
-        siblings = undefined,
-        targetIndex = undefined;
-
-    parentNode = element.parentNode;
-    siblings = _utilJs2['default'].elementChildren(parentNode);
-    targetIndex = siblings.indexOf(element);
-
-    if (targetIndex + 1 !== siblings.length) {
-        parentNode.removeChild(element);
-        parentNode.appendChild(element);
-    }
-};
-
-/**
- * Returns a value between 0 and 1 indicating the completeness of the throw out condition.
- *
- * Ration of the absolute distance from the original card position and element width.
- *
- * @param {Number} offset Distance from the dragStart.
- * @param {HTMLElement} element Element.
- * @return {Number}
- */
-Card.throwOutConfidence = function (offset, element) {
-    return Math.min(Math.abs(offset) / element.offsetWidth, 1);
-};
-
-/**
- * Determines if element is being thrown out of the stack.
- *
- * Element is considered to be thrown out when throwOutConfidence is equal to 1.
- *
- * @param {Number} offset Distance from the dragStart.
- * @param {HTMLElement} element Element.
- * @param {Number} throwOutConfidence config.throwOutConfidence
- * @return {Boolean}
- */
-Card.isThrowOut = function (offset, element, throwOutConfidence) {
-    return throwOutConfidence === 1;
-};
-
-/**
- * Calculates a distances at which the card is thrown out of the stack.
- *
- * @param {Number} min
- * @param {Number} max
- * @return {Number}
- */
-Card.throwOutDistance = function (min, max) {
-    return _utilJs2['default'].random(min, max);
-};
-
-/**
- * Calculates rotation based on the element x and y offset, element width and maxRotation variables.
- *
- * @param {Number} x Horizontal offset from the startDrag.
- * @param {Number} y Vertical offset from the startDrag.
- * @param {HTMLElement} element Element.
- * @param {Number} maxRotation
- * @return {Number} Rotation angle expressed in degrees.
- */
-Card.rotation = function (x, y, element, maxRotation) {
-    var horizontalOffset = undefined,
-        rotation = undefined,
-        verticalOffset = undefined;
-
-    horizontalOffset = Math.min(Math.max(x / element.offsetWidth, -1), 1);
-    verticalOffset = (y > 0 ? 1 : -1) * Math.min(Math.abs(y) / 100, 1);
-    rotation = horizontalOffset * verticalOffset * maxRotation;
-
-    return rotation;
-};
-
-Card.DIRECTION_LEFT = -1;
-Card.DIRECTION_RIGHT = 1;
-
-Card.THROW_IN = 'in';
-Card.THROW_OUT = 'out';
-
-exports['default'] = Card;
-module.exports = exports['default'];
-//# sourceMappingURL=card.js.map
-}).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./util.js":74,"hammerjs":2,"raf":68,"rebound":69,"sister":70,"vendor-prefix":75}],72:[function(require,module,exports){
-(function (global){
-'use strict';
-
-Object.defineProperty(exports, '__esModule', {
-    value: true
-});
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-
-var _stack = require('./stack');
-
-var _stack2 = _interopRequireDefault(_stack);
-
-var _card = require('./card');
-
-var _card2 = _interopRequireDefault(_card);
-
-global.gajus = global.gajus || {};
-
-global.gajus.Swing = {
-    Stack: _stack2['default'],
-    Card: _card2['default']
-};
-
-exports.Stack = _stack2['default'];
-exports.Card = _card2['default'];
-//# sourceMappingURL=index.js.map
-}).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./card":71,"./stack":73}],73:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, '__esModule', {
-    value: true
-});
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-
-var _sister = require('sister');
-
-var _sister2 = _interopRequireDefault(_sister);
-
-var _rebound = require('rebound');
-
-var _rebound2 = _interopRequireDefault(_rebound);
-
-var _card = require('./card');
-
-var _card2 = _interopRequireDefault(_card);
-
-var _util = require('./util');
-
-var _util2 = _interopRequireDefault(_util);
-
-var Stack = undefined;
-
-/**
- * @param {Object} config Stack configuration.
- * @return {Object} An instance of Stack object.
- */
-Stack = function (config) {
-    var construct = undefined,
-        eventEmitter = undefined,
-        index = undefined,
-        springSystem = undefined,
-        stack = undefined;
-
-    construct = function () {
-        stack = {};
-        springSystem = new _rebound2['default'].SpringSystem();
-        eventEmitter = (0, _sister2['default'])();
-        index = [];
-    };
-
-    construct();
-
-    /**
-     * Get the configuration object.
-     *
-     * @return {Object}
-     */
-    stack.getConfig = function () {
-        return config;
-    };
-
-    /**
-     * Get a singleton instance of the SpringSystem physics engine.
-     *
-     * @return {Sister}
-     */
-    stack.getSpringSystem = function () {
-        return springSystem;
-    };
-
-    /**
-     * Proxy to the instance of the event emitter.
-     *
-     * @param {String} eventName
-     * @param {String} listener
-     * @return {undefined}
-     */
-    stack.on = function (eventName, listener) {
-        eventEmitter.on(eventName, listener);
-    };
-
-    /**
-     * Creates an instance of Card and associates it with an element.
-     *
-     * @param {HTMLElement} element
-     * @return {Card}
-     */
-    stack.createCard = function (element) {
-        var card = undefined,
-            events = undefined;
-
-        card = (0, _card2['default'])(stack, element);
-
-        events = ['throwout', 'throwoutend', 'throwoutleft', 'throwoutright', 'throwin', 'throwinend', 'dragstart', 'dragmove', 'dragend'];
-
-        // Proxy Card events to the Stack.
-        events.forEach(function (eventName) {
-            card.on(eventName, function (data) {
-                eventEmitter.trigger(eventName, data);
-            });
-        });
-
-        index.push({
-            element: element,
-            card: card
-        });
-
-        return card;
-    };
-
-    /**
-     * Returns an instance of Card associated with an element.
-     *
-     * @param {HTMLElement} element
-     * @return {Card|null}
-     */
-    stack.getCard = function (element) {
-        var card = undefined;
-
-        card = _util2['default'].find(index, {
-            element: element
-        });
-
-        if (card) {
-            return card.card;
-        }
-
-        return null;
-    };
-
-    /**
-     * Remove an instance of Card from the stack index.
-     *
-     * @param {Card} card
-     * @return {Card}
-     */
-    stack.destroyCard = function (card) {
-        return _util2['default'].remove(index, card);
-    };
-
-    return stack;
-};
-
-exports['default'] = Stack;
-module.exports = exports['default'];
-//# sourceMappingURL=stack.js.map
-},{"./card":71,"./util":74,"rebound":69,"sister":70}],74:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, '__esModule', {
-    value: true
-});
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-
-var _lodashArrayRemove = require('lodash/array/remove');
-
-var _lodashArrayRemove2 = _interopRequireDefault(_lodashArrayRemove);
-
-var _lodashObjectAssign = require('lodash/object/assign');
-
-var _lodashObjectAssign2 = _interopRequireDefault(_lodashObjectAssign);
-
-var _lodashNumberRandom = require('lodash/number/random');
-
-var _lodashNumberRandom2 = _interopRequireDefault(_lodashNumberRandom);
-
-var _lodashCollectionFind = require('lodash/collection/find');
-
-var _lodashCollectionFind2 = _interopRequireDefault(_lodashCollectionFind);
-
-var _lodashCollectionWhere = require('lodash/collection/where');
-
-var _lodashCollectionWhere2 = _interopRequireDefault(_lodashCollectionWhere);
-
-var util = undefined;
-
-util = {};
-
-util.remove = _lodashArrayRemove2['default'];
-util.assign = _lodashObjectAssign2['default'];
-util.random = _lodashNumberRandom2['default'];
-util.find = _lodashCollectionFind2['default'];
-util.where = _lodashCollectionWhere2['default'];
-
-/**
- * Return direct children elements.
- *
- * @see http://stackoverflow.com/a/27102446/368691
- * @param {HTMLElement} element
- * @return {Array}
- */
-util.elementChildren = function (element) {
-    return util.where(element.childNodes, {
-        nodeType: 1
-    });
-};
-
-/**
- * @see http://stackoverflow.com/questions/4817029/whats-the-best-way-to-detect-a-touch-screen-device-using-javascript/4819886#4819886
- * @return {Boolean}
- */
-util.isTouchDevice = function () {
-    return 'ontouchstart' in window || navigator.msMaxTouchPoints;
-};
-
-exports['default'] = util;
-module.exports = exports['default'];
-//# sourceMappingURL=util.js.map
-},{"lodash/array/remove":4,"lodash/collection/find":6,"lodash/collection/where":7,"lodash/number/random":60,"lodash/object/assign":61}],75:[function(require,module,exports){
+},{}],75:[function(require,module,exports){
 'use strict';
 
 var style = document.createElement('p').style,
@@ -6957,7 +7062,7 @@ var Swing = require('swing');
                 swingOnDragmove: '&',
                 swingOnDragend: '&'
             },
-            link: /* @ngInject */ ["scope", "element", "attrs", "swingStack", function (scope, element, attrs, swingStack) {
+            link: function (scope, element, attrs, swingStack) {
 
                 var card = swingStack.add(element[0]),
                     events = ['throwout', 'throwoutleft', 'throwoutright', 'throwin', 'dragstart', 'dragmove', 'dragend'];
@@ -6973,9 +7078,9 @@ var Swing = require('swing');
                         });
                     });
                 });
-            }]
+            }
         };
     });
 
 })(angular, Swing);
-},{"swing":72}]},{},[76])
+},{"swing":3}]},{},[76])
