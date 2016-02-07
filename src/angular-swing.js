@@ -39,7 +39,7 @@ var Swing = require('swing');
                 swingOnDragmove: '&',
                 swingOnDragend: '&'
             },
-            link: /* @ngInject */ function (scope, element, attrs, swingStack) {
+            link: function (scope, element, attrs, swingStack) {
 
                 var card = swingStack.add(element[0]),
                     events = ['throwout', 'throwoutleft', 'throwoutright', 'throwin', 'dragstart', 'dragmove', 'dragend'];
