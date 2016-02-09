@@ -7072,11 +7072,20 @@ var Swing = require('swing');
                 // @see https://docs.angularjs.org/api/ng/service/$compile#comprehensive-directive-api
                 angular.forEach(events, function (eventName) {
                     card.on(eventName, function (eventObject) {
-                        scope['swingOn' + eventName.charAt(0).toUpperCase() + eventName.slice(1)]({
+                        var eventName = 'swingOn' + eventName.charAt(0).toUpperCase() + eventName.slice(1);
+                        scope[eventName]({
                             eventName: eventName,
                             eventObject: eventObject
                         });
-                        scope.$apply();
+                        switch(eventName) {
+                            case 'swingOnThrowoutleft':
+                            case 'swingOnThrowoutright':
+                            case 'swingOnThrowout':
+                                scope.$apply();
+                                break;
+                            default:
+                                break;
+                        }
                     });
                 });
             }
