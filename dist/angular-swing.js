@@ -7076,6 +7076,7 @@ var Swing = require('swing');
                             eventName: eventName,
                             eventObject: eventObject
                         });
+                        scope.$apply();
                     });
                 });
             }
@@ -7083,4 +7084,5 @@ var Swing = require('swing');
     });
 
 })(angular, Swing);
+
 },{"swing":3}]},{},[76])

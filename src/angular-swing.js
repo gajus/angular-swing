@@ -53,6 +53,7 @@ var Swing = require('swing');
                             eventName: eventName,
                             eventObject: eventObject
                         });
+                        scope.$apply();
                     });
                 });
             }
