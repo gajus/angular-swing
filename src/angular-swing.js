@@ -49,12 +49,12 @@ var Swing = require('swing');
                 // @see https://docs.angularjs.org/api/ng/service/$compile#comprehensive-directive-api
                 angular.forEach(events, function (eventName) {
                     card.on(eventName, function (eventObject) {
-                        var eventName = 'swingOn' + eventName.charAt(0).toUpperCase() + eventName.slice(1);
-                        scope[eventName]({
+                        var swingEventName = 'swingOn' + eventName.charAt(0).toUpperCase() + eventName.slice(1);
+                        scope[swingEventName]({
                             eventName: eventName,
                             eventObject: eventObject
                         });
-                        switch(eventName) {
+                        switch(swingEventName) {
                             case 'swingOnThrowoutleft':
                             case 'swingOnThrowoutright':
                             case 'swingOnThrowout':
