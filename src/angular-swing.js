@@ -6,7 +6,34 @@ var Swing = require('swing');
 
     angular.module('gajus.swing', []);
 
-    angular.module('gajus.swing').directive('swingStack', /* @ngInject */ function ($parse) {
+    angular.module('gajus.swing').factory('swingStacks', function() {
+        return {
+            stacks: [],
+            getTopCardFromStack: function(stackIndex) {
+                if (this.stacks[stackIndex]) {
+                    return this.stacks[stackIndex].cards[this.countCardsInStack(stackIndex) - 1];
+                }
+                return null;
+            },
+            getCardFromStack: function(stackIndex, cardIndex) {
+                if (this.stacks[stackIndex] && this.stacks[stackIndex].cards[cardIndex]) {
+                    return this.stacks[stackIndex].cards[cardIndex];
+                }
+                return null;
+            },
+            countCardsInStack: function(stackIndex) {
+                if (this.stacks[stackIndex]) {
+                    return this.stacks[stackIndex].cards.length;
+                }
+                return -1;
+            },
+            Card: Swing.Card,
+            Stack: Swing.Stack
+        };
+    });
+
+    angular.module('gajus.swing').directive('swingStack', /* @ngInject */ function ($parse, swingStacks) {
+        var stackIndex = 0;
         return {
             restrict: 'A',
             controller: /* @ngInject */ function ($scope, $element, $attrs) {
@@ -20,8 +47,13 @@ var Swing = require('swing');
                 stack = Swing.Stack(defaultOptions);
 
                 this.add = function (cardElement) {
-                    return stack.createCard(cardElement);
+                    var thecard = stack.createCard(cardElement);
+                    swingStacks.stacks[this.index].cards.push(thecard);
+                    return thecard;
                 };
+
+                this.index = stackIndex++;
+                swingStacks.stacks.push({cards: []});
             }
         };
     });
@@ -58,7 +90,9 @@ var Swing = require('swing');
                             case 'swingOnThrowoutleft':
                             case 'swingOnThrowoutright':
                             case 'swingOnThrowout':
-                                scope.$apply();
+                                if(scope.$$phase) {
+                                    scope.$apply();
+                                }
                                 break;
                             default:
                                 break;
