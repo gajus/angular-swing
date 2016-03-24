@@ -1,6 +1,6 @@
 angular
     .module('card-stack-demo', ['gajus.swing'])
-    .controller('card-stack-playground', function ($scope) {
+    .controller('card-stack-playground', function ($scope, swingStacks) {
         $scope.cards = [
             {name: 'clubs', symbol: '♣'},
             {name: 'diamonds', symbol: '♦'},
@@ -45,5 +45,14 @@ angular
                 console.log('isThrowOut', offset, elementWidth, throwOutConfidence);
                 return throwOutConfidence === 1;
             }
+        };
+
+        $scope.topthrowoutleft = function() {
+            var card = swingStacks.getTopCardFromStack(0);
+            card.throwOut(swingStacks.Card.DIRECTION_LEFT, 0);
+        };
+        $scope.topthrowoutright = function() {
+            var card = swingStacks.getTopCardFromStack(0);
+            card.throwOut(swingStacks.Card.DIRECTION_RIGHT, 0);
         };
     });

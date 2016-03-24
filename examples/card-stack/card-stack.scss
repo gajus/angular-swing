@@ -61,13 +61,28 @@ input {
             background: #FFFFFF; color: #373737; font-weight: bold; border: none; font: normal 18px/24px 'Helvetica Neue', Helvetica, Arial, freesans, sans-serif; margin: 0 5px; padding: 10px 15px; cursor: pointer; box-shadow: 0 2px 0 #63211F; outline: none; position: relative;
 
             &:hover {
-                
+
             }
 
             &:active {
                 background: #63211F; color: #FFFFFF; bottom: -2px; box-shadow: none;
             }
         }
+    }
+
+    .left, .right {
+        position: absolute;
+        bottom: 0;
+        background: #FCD424;
+        padding: 10px;
+        cursor: pointer;
+        text-transform: uppercase;
+    }
+    .right {
+        right: 0;
+    }
+    .left {
+        left: 0;
     }
 }
 
