@@ -1,62 +1,84 @@
+"use strict";
+var angular = require('angular');
 var Swing = require('swing');
+var moduleName = 'gajus.swing';
 
-(function(angular, Swing, undefined) {
+function SwingStackController($scope, $element, $attrs, $parse) {
+  var stack;
+  var defaultOptions = {};
+  var options = $parse($attrs.swingOptions)($scope);
+  angular.extend(defaultOptions, options);
+  stack = Swing.Stack(defaultOptions);
 
-    "use strict";
+  this.add = function(cardElement) {
+    return stack.createCard(cardElement);
+  }
+}
 
-    angular.module('gajus.swing', []);
+SwingStackController.$inject = ['$scope', '$element', '$attrs', '$parse'];
 
-    angular.module('gajus.swing').directive('swingStack', /* @ngInject */ function ($parse) {
-        return {
-            restrict: 'A',
-            controller: /* @ngInject */ function ($scope, $element, $attrs) {
-                var stack,
-                    defaultOptions = {};
+function swingStack() {
+  return {
+    restrict: 'A',
+    controller: SwingStackController,
+  }
+}
 
-                var options = $parse($attrs.swingOptions)($scope);
+function ngName(eventName) {
+  return 'swingOn' +
+     eventName.charAt(0).toUpperCase() +
+     eventName.slice(1);
+}
 
-                angular.extend(defaultOptions, options);
+function swingCardLink(scope, element, attrs, swingStack) {
+  var card = swingStack.add(element[0]);
+  var events = [
+    'throwout',
+    'throwoutleft',
+    'throwoutright',
+    'throwin',
+    'dragstart',
+    'dragmove',
+    'dragend'
+  ];
 
-                stack = Swing.Stack(defaultOptions);
-
-                this.add = function (cardElement) {
-                    return stack.createCard(cardElement);
-                };
-            }
-        };
+  function addListener(eventName) {
+    card.on(eventName, function(eventObject) {
+      scope.$apply(function() {
+        scope[ngName(eventName)]({
+          eventName: eventName,
+          eventObject: eventObject,
+        });
+      });
     });
+  }
 
-    angular.module('gajus.swing').directive('swingCard', function () {
-        return {
-            restrict: 'A',
-            require: '^swingStack',
-            scope: {
-                swingOnThrowout: '&',
-                swingOnThrowoutleft: '&',
-                swingOnThrowoutright: '&',
-                swingOnThrowin: '&',
-                swingOnDragstart: '&',
-                swingOnDragmove: '&',
-                swingOnDragend: '&'
-            },
-            link: function (scope, element, attrs, swingStack) {
+  // Map all Swing events to the scope expression.
+  // Map eventObject variable name to the expression wrapper fn.
+  // @see https://docs.angularjs.org/api/ng/service/$compile#comprehensive-directive-api
+  angular.forEach(events, addListener);
+}
 
-                var card = swingStack.add(element[0]),
-                    events = ['throwout', 'throwoutleft', 'throwoutright', 'throwin', 'dragstart', 'dragmove', 'dragend'];
+swingCardLink.$inject = ['scope', 'element', 'attrs', 'swingStack'];
 
-                // Map all Swing events to the scope expression.
-                // Map eventObject variable name to the expression wrapper fn.
-                // @see https://docs.angularjs.org/api/ng/service/$compile#comprehensive-directive-api
-                angular.forEach(events, function (eventName) {
-                    card.on(eventName, function (eventObject) {
-                        scope['swingOn' + eventName.charAt(0).toUpperCase() + eventName.slice(1)]({
-                            eventName: eventName,
-                            eventObject: eventObject
-                        });
-                    });
-                });
-            }
-        };
-    });
+function swingCard() {
+  return {
+    restrict: 'A',
+    require: '^swingStack',
+    scope: {
+      swingOnThrowout: '&',
+      swingOnThrowoutleft: '&',
+      swingOnThrowoutright: '&',
+      swingOnThrowin: '&',
+      swingOnDragstart: '&',
+      swingOnDragmove: '&',
+      swingOnDragend: '&'
+    },
+    link: swingCardLink,
+  };
+}
 
-})(angular, Swing);
+angular
+  .module('gajus.swing', [])
+  .directive('swingStack', swingStack)
+  .directive('swingCard', swingCard);
