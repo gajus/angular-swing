@@ -2,6 +2,7 @@
 var angular = require('angular');
 var Swing = require('swing');
 var moduleName = 'gajus.swing';
+module.exports = moduleName;
 
 function SwingStackController($scope, $element, $attrs, $parse) {
   var stack;
@@ -79,6 +80,6 @@ function swingCard() {
 }
 
 angular
-  .module('gajus.swing', [])
+  .module(moduleName, [])
   .directive('swingStack', swingStack)
   .directive('swingCard', swingCard);
